@@ -1,0 +1,379 @@
+#
+# esphome
+#
+
+esphome:
+  name: 8-zone-sensor-board
+  platform: ESP32
+  board: esp-wrover-kit
+  name_add_mac_suffix: true # Adds a 6 digit MAC suffix to the name defined above. Can be used to distinguish between multiple sensor panels.
+  project:
+    name: esphome.project-template
+    version: "1.0"
+#
+# Ethernet
+#
+
+ethernet:
+  type: LAN8720
+  mdc_pin: GPIO23
+  mdio_pin: GPIO18
+  clk_mode: GPIO0_IN
+  phy_addr: 1
+  power_pin: GPIO16
+
+external_components:
+  - source:
+      type: local
+      path: external_components
+    components: ["pca9554"] # Local copy required until cached reads feature is merged into esphome
+  
+
+
+#
+# webserver
+#
+
+web_server:
+  port: 80
+# auth:
+#    username: admin
+#    password: !secret web_password
+
+#
+# logger
+#
+
+logger:
+  level: INFO
+
+#
+# api
+#
+
+api:
+  reboot_timeout: 24h
+#
+#  Uncomment the lines below to enable encrypted communication
+#  between homeassistant and the sprinkler controller.
+#  You'll need to change your encryption key in secrets.yaml,
+#  and give homeassistant the encryption key.
+#
+#  encryption:
+#          key: !secret api_key
+
+
+#
+# ota
+#
+
+ota:
+  password: !secret esphome_ota_password
+
+#
+# Dashboard import
+#
+
+#dashboard_import:
+#  package_import_url: github://hwstar
+
+#
+# I2C bus definition
+#
+
+
+i2c:
+  sda: GPIO33
+  scl: GPIO14
+  id: bus_a
+  frequency: 400kHz
+  
+  
+pca9554:
+  - id: pca9554_zones_1_8
+    address: 0x38
+    
+  - id: pca9554_zones_9_16
+    address: 0x39
+  
+interval:
+  - interval: 3sec
+    then:
+      - switch.turn_on: heartbeat_led
+      - delay: 100ms
+      - switch.turn_off: heartbeat_led
+      - delay: 100ms
+      - switch.turn_on: heartbeat_led
+      - delay: 100ms
+      - switch.turn_off: heartbeat_led
+
+
+  
+sensor:
+  # ADC inputs
+  - platform: adc
+    id: vbatt_monitor
+    name: Vbatt_Monitor
+    attenuation: 11dB
+    accuracy_decimals: 2
+    update_interval: 10s
+    pin: GPIO39
+    filters:
+      multiply: 5.3
+    
+  - platform: adc
+    id: aux_monitor
+    name: Aux_Monitor
+    attenuation: 11dB
+    accuracy_decimals: 2
+    update_interval: 10s
+    pin: GPIO36
+    filters:
+      multiply: 5.3
+    
+  - platform: adc
+    id: siren_monitor
+    name: Siren_Monitor
+    attenuation: 11dB
+    accuracy_decimals: 2
+    update_interval: 10s
+    pin: GPIO35
+    filters:
+      multiply: 5.3
+
+binary_sensor:
+  #
+  # Digital Inputs
+  #
+    
+  # BOOT switch
+  - platform: gpio
+    id: boot_switch
+    pin:
+      number: GPIO0
+      mode:
+        input: true
+      inverted: true      
+  
+  
+  # AC failure
+  - platform: gpio
+    id: ac_fail
+    name: AC-Fail
+    pin:
+      number: GPIO32
+      mode:
+        input: true
+      inverted: false      
+        
+  # Zones 1-8
+  
+  - platform: gpio
+    id: zone8
+    name: Zone8
+    pin:
+      pca9554: pca9554_zones_1_8
+      number: 7
+      mode:
+        input: true
+      inverted: true # Inverted because the alarm component wants to see a low when the zone is good.
+      
+  - platform: gpio
+    id: zone7
+    name: Zone7
+    pin:
+      pca9554: pca9554_zones_1_8
+      number: 6
+      mode:
+        input: true
+      inverted: true     
+     
+  - platform: gpio
+    name: Zone6
+    id: zone6
+    pin:
+      pca9554: pca9554_zones_1_8
+      number: 5
+      mode:
+        input: true
+      inverted: true
+      
+  - platform: gpio
+    name: Zone5
+    id: zone5
+    pin:
+      pca9554: pca9554_zones_1_8
+      number: 4
+      mode:
+        input: true
+      inverted: true      
+
+  - platform: gpio
+    name: Zone4
+    id: zone4
+    pin:
+      pca9554: pca9554_zones_1_8
+      number: 3
+      mode:
+        input: true
+      inverted: true
+
+  - platform: gpio
+    name: Zone3
+    id: zone3
+    pin:
+      pca9554: pca9554_zones_1_8
+      number: 2
+      mode:
+        input: true
+      inverted: true
+ 
+  - platform: gpio
+    name: Zone2
+    id: zone2
+    pin:
+      pca9554: pca9554_zones_1_8
+      number: 1
+      mode:
+        input: true
+      inverted: true 
+      
+  - platform: gpio
+    name: Zone1
+    id: zone1
+    pin:
+      pca9554: pca9554_zones_1_8
+      number: 0
+      mode:
+        input: true
+      inverted: true
+      
+   # Zones 9-16
+  
+  - platform: gpio
+    id: zone16
+    name: Zone16
+    pin:
+      pca9554: pca9554_zones_9_16
+      number: 7
+      mode:
+        input: true
+      inverted: true
+      
+  - platform: gpio
+    id: zone15
+    name: Zone15
+    pin:
+      pca9554: pca9554_zones_9_16
+      number: 6
+      mode:
+        input: true
+      inverted: true     
+     
+  - platform: gpio
+    name: Zone14
+    id: zone14
+    pin:
+      pca9554: pca9554_zones_9_16
+      number: 5
+      mode:
+        input: true
+      inverted: true
+      
+  - platform: gpio
+    name: Zone13
+    id: zone13
+    pin:
+      pca9554: pca9554_zones_9_16
+      number: 4
+      mode:
+        input: true
+      inverted: true      
+
+  - platform: gpio
+    name: Zone12
+    id: zone12
+    pin:
+      pca9554: pca9554_zones_9_16
+      number: 3
+      mode:
+        input: true
+      inverted: true
+
+  - platform: gpio
+    name: Zone11
+    id: zone11
+    pin:
+      pca9554: pca9554_zones_9_16
+      number: 2
+      mode:
+        input: true
+      inverted: true
+ 
+  - platform: gpio
+    name: Zone10
+    id: zone10
+    pin:
+      pca9554: pca9554_zones_9_16
+      number: 1
+      mode:
+        input: true
+      inverted: true 
+      
+  - platform: gpio
+    name: Zone9
+    id: zone9
+    pin:
+      pca9554: pca9554_zones_9_16
+      number: 0
+      mode:
+        input: true
+      inverted: true
+      
+switch:
+  # Siren output
+  - platform: gpio
+    name: Siren
+    id: siren
+    pin:
+      number: GPIO02
+    inverted: false
+    
+  # Heartbeat LED
+  - platform: gpio
+    id: heartbeat_led
+    pin:
+      number: GPIO15
+      mode:
+        output: true
+      inverted: false
+  # RX Enable
+  - platform: gpio
+    id: rx_ena
+    pin:
+      number: GPIO12
+      mode:
+        output: true
+      inverted: false
+  
+  # AC disconnect
+  - platform: gpio
+    id: ac_disc
+    pin:
+      number: GPIO4
+      mode:
+        output: true
+      inverted: false
+
+uart:
+  # Uart for future CBUS expansion
+  - id: cbus_uart
+    tx_pin: GPIO17
+    rx_pin: GPIO5
+    baud_rate: 4800
+  
+  
+
+
+
+
