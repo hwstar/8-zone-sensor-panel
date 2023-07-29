@@ -2,7 +2,7 @@
 
 ![alt text](https://github.com/hwstar/8-zone-sensor-panel/blob/main/assets/logo.png)
 
-![alt text](https://github.com/hwstar/8-zone-sensor-panel/blob/main/assets/proto-pic.png)
+![alt text](https://github.com/hwstar/8-zone-sensor-panel/blob/main/assets/proto-pic.jpg)
 
 ![alt text](https://github.com/hwstar/8-zone-sensor-panel/blob/main/assets/made-for-esphome-black-on-white.png)
 
