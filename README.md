@@ -1,5 +1,3 @@
-
-
 ![alt text](https://github.com/hwstar/8-zone-sensor-panel/blob/main/assets/logo.png)
 
 ![alt text](https://github.com/hwstar/8-zone-sensor-panel/blob/main/assets/proto-pic.jpg)
@@ -7,9 +5,9 @@
 ![alt text](https://github.com/hwstar/8-zone-sensor-panel/blob/main/assets/made-for-esphome-black-on-white.png)
 
 This is the code and documentation repository for an 8 zone sensor panel
-controller kit based on an ESP32. It has the following features:
+controller kit. It has the following features:
 
-* ESP32 Microcontroller
+* ESP32 Microcontroller utulizing the WT32-ETH01 Ethernet Module.
 * Uses a 40VA 16.5VAC wall transformer with an internal fuse.
 * Charges a 12V 7A lead acid battery 
 * AC power failure detection.
@@ -31,7 +29,7 @@ It is primarily designed to work with [ESPHome](https://github.com/esphome/espho
 
 ## Disclaimer
 
-By purchasing and/or using this sensor panel hardware, you indicate you agree that are using it at your own risk.  You agree that I will not be held liable for hardware failure, fire, injury, death, theft, property damage or any other loss. Professional monitoring is not available for this product, and this is something you will need to consider when using this hardware. Since the hardware is shipped in kit form and you will be modifying the software, you will be solely responsible for determining if this hardware and software is fit for purpose.
+By purchasing and/or using this sensor panel hardware, you indicate you agree that are using it at your own risk.  You agree that I will not be held liable for hardware failure, fire, injury, death, theft, property damage or any other loss. Professional monitoring is not available for this product from me, and this is something you will need to consider when using this hardware. Since the hardware is shipped in kit form and you will be modifying the software, you will be solely responsible for determining if this hardware and software is fit for purpose. For non-commercial,  residential use only.
 
 ## Audience
 
