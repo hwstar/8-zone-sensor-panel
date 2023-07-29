@@ -74,8 +74,8 @@ ota:
 # Dashboard import
 #
 
-#dashboard_import:
-#  package_import_url: github://hwstar
+dashboard_import:
+  package_import_url: github://hwstar/8-zone-sensor-panel/16-zone-sensor.yaml@main
 
 #
 # I2C bus definition
