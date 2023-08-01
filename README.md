@@ -29,15 +29,15 @@ It is primarily designed to work with [ESPHome](https://github.com/esphome/espho
 
 ## Disclaimer
 
-By purchasing and/or using this sensor panel hardware, you indicate you agree that are using it at your own risk.  You agree that I will not be held liable for hardware failure, fire, injury, death, theft, property damage or any other loss. Professional monitoring is not available for this product from me, and this is something you will need to consider when using this hardware. Since the hardware is shipped in kit form and you will be modifying the software, you will be solely responsible for determining if this hardware and software is fit for purpose. For non-commercial,  residential use only.
+By purchasing and/or using this sensor panel hardware, you indicate you agree that are using it at your own risk.  You also agree that I will not be held liable for hardware failure, fire, injury, death, theft, property damage or any other loss. Professional monitoring is not available for this product from me, and this is something you will need to consider when using this hardware. Since the hardware is shipped in kit form and you will be modifying the software, you will be solely responsible for determining if this hardware and software is fit for purpose. Non-commercial, residential use only.
 
 ## Audience
 
 The controller is shipped without firmware which can connect to your WIFI network. It will require some firmware programming and electrical knowledge to successfully implement. 
 One should have some experience modifying ESPHome yaml files, reading wiring diagrams, using a Windows or Linux command line shell, using serial devices such as the FTDI serial cable,
 and using the ESPHome tool to program ESPHome devices. If you are not sure how to program firmware into an ESPHome device, please study the documentation on esphome.com and become
-familiar with it before purchasing a board. A link to the the programming documentation can be found  !!TODO Update link!!
+familiar with it before purchasing a board. Programming documentation can be found in the WIKI. 
 
 ## WIKI
 
-Besides this README.md, there is more documentation in the WIKI !!TODO Update Link!!
+Besides this README.md, there is more documentation in the WIKI (see above)
