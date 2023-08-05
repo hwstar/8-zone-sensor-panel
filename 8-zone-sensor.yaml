@@ -107,6 +107,14 @@ interval:
 
   
 sensor:
+  # TMP102 sensor on board 
+  # Commented out 8/4/23 due to 50mS delay in component causing warnings to be generated.
+#  - platform: tmp102
+#    name: "Board Temperature"
+#    update_interval: 1s
+#    address: 0x48
+#    id: board_temp
+
   # ADC inputs
   - platform: adc
     id: vbatt_monitor
@@ -166,8 +174,8 @@ binary_sensor:
   # Zones 1-8
   
   - platform: gpio
-    id: zone8
     name: Zone8
+    id: zone8
     pin:
       pca9554: pca9554_zones_1_8
       number: 7
@@ -176,8 +184,8 @@ binary_sensor:
       inverted: true # Inverted because the alarm component wants to see a low when the zone is good.
       
   - platform: gpio
-    id: zone7
     name: Zone7
+    id: zone7
     pin:
       pca9554: pca9554_zones_1_8
       number: 6
