@@ -86,7 +86,7 @@ i2c:
   sda: GPIO33
   scl: GPIO14
   id: bus_a
-  frequency: 400kHz
+  frequency: 300kHz # Limited by bus capacitance on the board
   
   
 pca9554:
