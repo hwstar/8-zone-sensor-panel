@@ -27,7 +27,54 @@ external_components:
       type: local
       path: external_components
     components: ["pca9554"] # Local copy required until cached reads feature is merged into esphome
-  
+ 
+globals:
+  - id: arm_away_fault
+    type: bool
+    restore_value: no
+    initial_value: "false"
+    
+  - id: arm_home_fault
+    type: bool
+    restore_value: no
+    initial_value: "false"
+ 
+ 
+alarm_control_panel:
+  - platform: template
+    name: Alarm Panel # You will see this name as alarm_panel.Alarm_Panel in HomeAssistant
+    id: acp1
+    requires_code_to_arm: false
+    arming_away_time: 30s
+    arming_home_time: 5s
+    pending_time: 45s
+    trigger_time: 5min
+    restore_mode: RESTORE_DEFAULT_DISARMED # Fail Secure
+    
+    binary_sensors:
+      - input: zone1  # Label your zones here as comments
+      - input: zone2  # 
+      - input: zone3  # 
+      - input: zone4  # 
+      - input: zone5  #
+      - input: zone6  # 
+      - input: zone7  # 
+      - input: zone8  # 
+    
+    on_state:
+      then: # Add things to do on state changes here.
+        - lambda: !lambda |-
+            ESP_LOGI("AlarmPanel", "State change %s", alarm_control_panel_state_to_string(id(acp1)->get_state()));
+        
+    on_triggered:
+      then: # Add things to do when triggered here. e.g. sound siren, send a message etc.
+        - lambda: !lambda |-
+            ESP_LOGI("AlarmPanel", "Alarm Triggered!");
+            
+    on_cleared:
+      then: # Add things to do when the alarm is canceled here.
+        - lambda: !lambda |-
+            ESP_LOGI("AlarmPanel", "Alarm Cleared!");
 
 
 #
@@ -94,6 +141,63 @@ pca9554:
   address: 0x38
   
 interval:
+  - interval: 100ms
+    #
+    # This code checks for zone faults. You don't want to arm the alarm with faults present
+    # The alarm component doesn't support fault bypassing yet, so we need some form of indication
+    # when faults are present to prompt the user not to arm the system.
+    #
+    
+    then:
+      lambda: |-
+        bool s = false;
+        
+        // For away case
+        if(id(zone1).state == true) // Zone 1
+          s = true;
+        if(id(zone2).state == true) // Zone 2
+          s = true;
+        if(id(zone3).state == true) // Zone 3
+          s = true;
+        if(id(zone4).state == true) // Zone 4
+          s = true;
+        if(id(zone5).state == true) // Zone 5
+          s = true;
+        if(id(zone6).state == true) // Zone 6
+          s = true;
+        if(id(zone7).state == true) // Zone 7
+          s = true;
+        if(id(zone8).state == true) // Zone 8
+          s = true;
+       
+          
+        id(arm_away_fault) = s; 
+        
+        // For home case
+        s = false;
+        if(id(zone1).state == true) // Zone 1
+          s = true;
+        if(id(zone2).state == true) // Zone 2
+          s = true;
+        if(id(zone3).state == true) // Zone 3
+          s = true;
+        if(id(zone4).state == true) // Zone 4
+          s = true;
+        if(id(zone5).state == true) // Zone 5
+          s = true;
+        if(id(zone6).state == true) // Zone 6
+          s = true;
+        if(id(zone7).state == true) // Zone 7
+          s = true;
+        if(id(zone8).state == true) // Zone 8
+          s = true;
+    
+        
+        id(arm_home_fault) = s;
+   
+ 
+        
+          
   - interval: 3sec
     then:
       - switch.turn_on: heartbeat_led
@@ -150,16 +254,6 @@ binary_sensor:
   #
   # Digital Inputs
   #
-    
-  # BOOT switch
-  - platform: gpio
-    id: boot_switch
-    pin:
-      number: GPIO0
-      mode:
-        input: true
-      inverted: true      
-  
   
   # AC failure
   - platform: gpio
@@ -174,27 +268,28 @@ binary_sensor:
   # Zones 1-8
   
   - platform: gpio
-    name: Zone8
+    name: Zone_8
     id: zone8
     pin:
       pca9554: pca9554_zones_1_8
       number: 7
       mode:
         input: true
-      inverted: true # Inverted because the alarm component wants to see a low when the zone is good.
-      
+      inverted: true # Inverted because the alarm component wants to see a low when the zone is normal
+
   - platform: gpio
-    name: Zone7
+    name: Zone_7
     id: zone7
     pin:
       pca9554: pca9554_zones_1_8
       number: 6
       mode:
         input: true
-      inverted: true     
+      inverted: true  
+ 
      
   - platform: gpio
-    name: Zone6
+    name: Zone_6
     id: zone6
     pin:
       pca9554: pca9554_zones_1_8
@@ -202,19 +297,21 @@ binary_sensor:
       mode:
         input: true
       inverted: true
+ 
       
   - platform: gpio
-    name: Zone5
+    name: Zone_5
     id: zone5
     pin:
       pca9554: pca9554_zones_1_8
       number: 4
       mode:
         input: true
-      inverted: true      
+      inverted: true
+ 
 
   - platform: gpio
-    name: Zone4
+    name: Zone_4
     id: zone4
     pin:
       pca9554: pca9554_zones_1_8
@@ -222,9 +319,9 @@ binary_sensor:
       mode:
         input: true
       inverted: true
-
+ 
   - platform: gpio
-    name: Zone3
+    name: Zone_3
     id: zone3
     pin:
       pca9554: pca9554_zones_1_8
@@ -234,24 +331,27 @@ binary_sensor:
       inverted: true
  
   - platform: gpio
-    name: Zone2
+    name: Zone_2
     id: zone2
     pin:
       pca9554: pca9554_zones_1_8
       number: 1
       mode:
         input: true
-      inverted: true 
-      
-  - platform: gpio
-    name: Zone1
-    id: zone1
+      inverted: true
+ 
+  - platform: gpio 
+    name: Zone_1
+    id: zone1 
     pin:
       pca9554: pca9554_zones_1_8
       number: 0
       mode:
         input: true
       inverted: true
+
+      
+
       
 switch:
   # Siren output
