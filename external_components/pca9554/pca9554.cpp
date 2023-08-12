@@ -1,4 +1,3 @@
-#include <algorithm>
 #include "pca9554.h"
 #include "esphome/core/log.h"
 
@@ -37,12 +36,10 @@ void PCA9554Component::setup() {
 }
 
 void PCA9554Component::loop() {
-  // Called approximately 10 ms on average (100 Hz). Note: during power up
-  // initialization it will be called at a higher rate.
   // The read_inputs_() method will cache the input values from the chip.
   this->read_inputs_();
   // Clear all the previously read flags.
-  std::fill(this->was_previously_read_.begin(), this->was_previously_read_.end(), false);
+  this->was_previously_read_ = 0x00;
 }
 
 void PCA9554Component::dump_config() {
@@ -59,11 +56,11 @@ bool PCA9554Component::digital_read(uint8_t pin) {
   // have seen a read during the time esphome is running this loop. If we have,
   // we do an I2C bus transaction to get the latest value. If we haven't
   // we return a cached value which was read at the time loop() was called.
-  if (was_previously_read_[pin])
+  if (this->was_previously_read_ & (1 << pin))
     this->read_inputs_();  // Force a read of a new value
   // Indicate we saw a read request for this pin in case a
   // read happens later in the same loop.
-  was_previously_read_[pin] = true;
+  this->was_previously_read_ |= (1 << pin);
   return this->input_mask_ & (1 << pin);
 }
 
