@@ -29,7 +29,8 @@ It is primarily designed to work with [ESPHome](https://github.com/esphome/espho
 
 ## Disclaimer
 
-By purchasing and/or using this sensor panel hardware, you indicate you agree that are using it at your own risk.  You also agree that I will not be held liable for hardware failure, fire, injury, death, theft, property damage or any other loss. Professional monitoring is not available for this product from me, and this is something you will need to consider when using this hardware. Since the hardware is shipped in kit form and you will be modifying the software, you will be solely responsible for determining if this hardware and software is fit for purpose. Non-commercial, residential use only.
+By purchasing and/or using this sensor panel hardware, you indicate you agree that are using it at your own risk.  You also agree that I will not be held liable for hardware failure, fire, injury, death, theft, property damage or any other loss. Professional monitoring is not available for this product from me, and this is something you will need to consider when using this hardware. Since the hardware is shipped in kit form and you will be modifying the software, you will be solely responsible for determining if this hardware and software is fit for purpose. Non-commercial, residential use only. This product is not intended to be used as life safety device.
+
 
 ## Audience
 

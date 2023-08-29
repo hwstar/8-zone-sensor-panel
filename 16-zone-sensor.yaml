@@ -10,6 +10,7 @@ esphome:
   project:
     name: esphome.project-template
     version: "1.0"
+  min_version: "2023.8.1"
 #
 # Ethernet
 #
@@ -21,12 +22,6 @@ ethernet:
   clk_mode: GPIO0_IN
   phy_addr: 1
   power_pin: GPIO16
-
-external_components:
-  - source:
-      type: local
-      path: external_components
-    components: ["pca9554"] # Local copy required until cached reads feature is merged into esphome
  
 globals:
   - id: arm_away_fault
@@ -109,7 +104,7 @@ api:
   reboot_timeout: 24h
 #
 #  Uncomment the lines below to enable encrypted communication
-#  between homeassistant and the sprinkler controller.
+#  between homeassistant and the sensor panel.
 #  You'll need to change your encryption key in secrets.yaml,
 #  and give homeassistant the encryption key.
 #
