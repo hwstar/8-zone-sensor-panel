@@ -15,7 +15,6 @@ controller kit. It has the following features:
 * 1 Output for a 12V siren.
 * 4 pin JST connector with I2C bus signals and 3.3V
 * 8 pin JST connector for future zone expanders.
-* 5 pin connector for future keypad terminals.
 * 2 12 pin pluggable terminal blocks for zone sensor inputs
 * 1 12 pin connector for AC power, AUX power, Siren and Battery connections.
 * 3 status LED's show AC power state, siren state, and ESP32 heartbeat
@@ -25,11 +24,15 @@ controller kit. It has the following features:
 * PTC fuse protection on the Battery, Auxillary Power and Siren outputs.
 
 This hardware will be for sale on Tindie when it has been fully tested.
-It is primarily designed to work with [ESPHome](https://github.com/esphome/esphome) firmware version 2023.6.3 or later.
+It is primarily designed to work with [ESPHome](https://github.com/esphome/esphome) firmware version 2023.8.1 or later.
 
 ## Disclaimer
 
-By purchasing and/or using this sensor panel hardware, you indicate you agree that are using it at your own risk.  You also agree that I will not be held liable for hardware failure, fire, injury, death, theft, property damage or any other loss. Professional monitoring is not available for this product from me, and this is something you will need to consider when using this hardware. Since the hardware is shipped in kit form and you will be modifying the software, you will be solely responsible for determining if this hardware and software is fit for purpose. Non-commercial, residential use only. This product is not intended to be used as life safety device.
+By purchasing and/or using this sensor panel hardware, you indicate you agree that are using it at your own risk.  
+You also agree that I will not be held liable for hardware failure, fire, injury, death, theft, property damage or any other loss. 
+Professional monitoring is not available for this product from me, and this is something you will need to consider when using this hardware. 
+Since the hardware is shipped in kit form and you will be modifying the software, you will be solely responsible for determining if this hardware and software is fit for purpose. 
+Non-commercial, residential use only. This product is not intended to be used as life safety device.
 
 
 ## Audience
