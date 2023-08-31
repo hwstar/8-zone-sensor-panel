@@ -7,7 +7,7 @@
 This is the code and documentation repository for an 8 zone sensor panel
 controller kit. It has the following features:
 
-* ESP32 Microcontroller utulizing the WT32-ETH01 Ethernet Module.
+* ESP32 Microcontroller utilizing the WT32-ETH01 Ethernet Module.
 * Uses a 40VA 16.5VAC wall transformer with an internal fuse.
 * Charges a 12V 7A lead acid battery 
 * AC power failure detection.
@@ -20,10 +20,11 @@ controller kit. It has the following features:
 * 3 status LED's show AC power state, siren state, and ESP32 heartbeat
 * TVS diodes on all sensor inputs, power, and other external connectors.
 * On-board TMP102 Temperature sensor.
+* I2C bus repeater on external zone connector.
 * Monitoring of battery, auxilliary, and siren voltages using the ESP32 ADC.
 * PTC fuse protection on the Battery, Auxillary Power and Siren outputs.
 
-This hardware will be for sale on Tindie when it has been fully tested.
+The hardware is for sale on [Tindie](https://www.tindie.com/products/home-control-labs/8-zone-sensor-panel-for-esphome/)
 It is primarily designed to work with [ESPHome](https://github.com/esphome/esphome) firmware version 2023.8.1 or later.
 
 ## Disclaimer
