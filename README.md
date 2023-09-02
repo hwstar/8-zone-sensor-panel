@@ -37,8 +37,7 @@ Non-commercial, residential use only. This product is not intended to be used as
 
 
 ## Audience
-
-Toiu'll need some technical knowledge to use this effectively. It will require some firmware programming and electrical knowledge to successfully implement. 
+You will need some technical knowledge to use this effectively. It will require some firmware programming and electrical knowledge to successfully implement. 
 One should have some experience modifying ESPHome yaml files, reading wiring diagrams, using a Windows or Linux command line shell, using serial devices such as the FTDI serial cable,
 and using the ESPHome tool to program ESPHome devices. If you are not sure how to program firmware into an ESPHome device, please study the documentation on esphome.com and become
 familiar with it before purchasing a board. Programming documentation can be found in the WIKI. 
