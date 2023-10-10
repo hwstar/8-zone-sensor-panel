@@ -1,0 +1,596 @@
+#
+# esphome
+#
+
+esphome:
+  name: 16-zone-sensor-board
+  platform: ESP32
+  board: esp-wrover-kit
+  name_add_mac_suffix: true # Adds a 6 digit MAC suffix to the name defined above. Can be used to distinguish between multiple sensor panels.
+  project:
+    name: esphome.project-template
+    version: "1.0"
+  min_version: "2023.8.1"
+  on_boot: # Important - need to enable the UART rx pin
+    then:
+      # Handle cbus uart_rx strapping pin
+      - output.turn_on: rx_ena
+      - delay: 1s
+      # Send status update to Kpa1 as Alarm Panel does not initially send its state.
+      #  Uncomment if using kpa1
+      - lambda: |-
+          // Alarm panel returns an enum
+          esphome::alarm_control_panel::AlarmControlPanelState status = id(acp1)->get_state();
+          // Transmit state to keypads on power up
+          id(cbus).update_alarm_state((uint8_t) status);
+#
+# Ethernet
+#
+
+ethernet:
+  type: LAN8720
+  mdc_pin: GPIO23
+  mdio_pin: GPIO18
+  clk_mode: GPIO0_IN
+  phy_addr: 1
+  power_pin: GPIO16
+
+# Uncomment for Kpa1 Honeywell to SP8 keypad adapter
+#
+external_components:
+  - source:
+      type: local
+      path: external_components
+    components: ["kpa1"] 
+ 
+ 
+globals:
+  - id: arm_away_fault
+    type: bool
+    restore_value: no
+    initial_value: "false"
+    
+  - id: arm_home_fault
+    type: bool
+    restore_value: no
+    initial_value: "false"
+    
+  - id: old_arm_away_fault_state
+    type: unsigned long long
+    restore_value: no
+    initial_value: "0xFFFFFFFFFFFFFFFF"
+    
+ 
+alarm_control_panel:
+  - platform: template
+    name: Alarm Panel # You will see this name as alarm_panel.Alarm_Panel in HomeAssistant
+    id: acp1
+    requires_code_to_arm: false
+    arming_away_time: 30s
+    arming_home_time: 5s
+    pending_time: 45s
+    trigger_time: 5min
+    restore_mode: RESTORE_DEFAULT_DISARMED # Fail Secure
+    
+    binary_sensors:
+      - input: zone1  # Label your zones here as comments
+      - input: zone2  # 
+      - input: zone3  # 
+      - input: zone4  # 
+      - input: zone5  #
+      - input: zone6  # 
+      - input: zone7  # 
+      - input: zone8  # 
+      - input: zone9  # 
+      - input: zone10 # 
+      - input: zone11 #
+      - input: zone12 # 
+      - input: zone13 # 
+      - input: zone14 # 
+      - input: zone15 # 
+      - input: zone16 #
+    on_state:
+      then: # Add things to do on state changes here.
+        - lambda: !lambda |-
+            // Uncomment if using a kpa1
+            id(cbus)->update_alarm_state(id(acp1)->get_state()); // Send state change to Kpa1 via cbus
+            ESP_LOGI("AlarmPanel", "State change %s", alarm_control_panel_state_to_string(id(acp1)->get_state()));
+        
+    on_triggered:
+      then: # Add things to do when triggered here. e.g. sound siren, send a message etc.
+        - lambda: !lambda |-
+            ESP_LOGI("AlarmPanel", "Alarm Triggered!");
+            
+    on_cleared:
+      then: # Add things to do when the alarm is canceled here.
+        - lambda: !lambda |-
+            ESP_LOGI("AlarmPanel", "Alarm Cleared!");
+
+
+#
+# webserver
+#
+
+web_server:
+  port: 80
+# auth:
+#    username: admin
+#    password: !secret web_password
+
+#
+# logger
+#
+
+logger:
+  level: INFO
+
+#
+# api
+#
+
+api:
+  reboot_timeout: 24h
+#
+#  Uncomment the lines below to enable encrypted communication
+#  between homeassistant and the sensor panel.
+#  You'll need to change your encryption key in secrets.yaml,
+#  and give homeassistant the encryption key.
+#
+#  encryption:
+#          key: !secret api_key
+
+
+#
+# ota
+#
+
+ota:
+  password: !secret esphome_ota_password
+
+#
+# Dashboard import
+#
+
+dashboard_import:
+  package_import_url: github://hwstar/8-zone-sensor-panel/16-zone-sensor.yaml@main
+
+#
+# I2C bus definition
+#
+
+
+i2c:
+  sda: GPIO33
+  scl: GPIO14
+  id: bus_a
+  frequency: 300kHz # Limited by bus capacitance on the board
+  
+  
+pca9554:
+  - id: pca9554_zones_1_8
+    address: 0x38
+    
+  - id: pca9554_zones_9_16
+    address: 0x39
+  
+interval:
+  - interval: 100ms
+    #
+    # This code checks for zone faults. You don't want to arm the alarm with faults present
+    # The alarm component doesn't support fault bypassing yet, so we need some form of indication
+    # when faults are present to prompt the user not to arm the system.
+    #
+    
+    then:
+      lambda: |-
+        bool s = false;
+        unsigned long long new_fault_bits = 0ULL;
+        
+        // For away case
+        if(id(zone1).state == true) // Zone 1
+          new_fault_bits |= (1ULL << 0);
+          
+        if(id(zone2).state == true) // Zone 2
+          new_fault_bits |= (1ULL << 1);
+        
+        if(id(zone3).state == true) // Zone 3
+          new_fault_bits |= (1ULL << 2);
+          
+        if(id(zone4).state == true) // Zone 4
+          new_fault_bits |= (1ULL << 3);
+          
+        if(id(zone5).state == true) // Zone 5
+          new_fault_bits |= (1ULL << 4);
+          
+        if(id(zone6).state == true) // Zone 6
+          new_fault_bits |= (1ULL << 5);
+          
+        if(id(zone7).state == true) // Zone 7
+          new_fault_bits |= (1ULL << 6);
+          
+        if(id(zone8).state == true) // Zone 8
+          new_fault_bits |= (1ULL << 7);
+          
+        if(id(zone9).state == true) // Zone 9
+          new_fault_bits |= (1ULL << 8);
+          
+        if(id(zone10).state == true) // Zone 10
+          new_fault_bits |= (1ULL << 9);
+          
+        if(id(zone11).state == true) // Zone 11
+          new_fault_bits |= (1ULL << 10);
+          
+        if(id(zone12).state == true) // Zone 12
+          new_fault_bits |= (1ULL << 11);
+          
+        if(id(zone13).state == true) // Zone 13
+          new_fault_bits |= (1ULL << 12);
+          
+        if(id(zone14).state == true) // Zone 14
+          new_fault_bits |= (1ULL << 13);
+          
+        if(id(zone15).state == true) // Zone 15
+          new_fault_bits |= (1ULL << 14);
+          
+        if(id(zone16).state == true) // Zone 16
+          new_fault_bits |= (1ULL << 15);
+          
+        // Update the arm away fault state
+        id(arm_away_fault) = (new_fault_bits != 0ULL); 
+        
+        // If we see a change in the state of the fault 
+        // bits we let the keypads know here.
+        //
+        // Uncomment if using a kpa1
+        //
+        if(id(old_arm_away_fault_state) != new_fault_bits) {
+          id(old_arm_away_fault_state) = new_fault_bits;
+          id(cbus).update_system_ready(!(new_fault_bits > 0));
+        }
+        
+        // For home case
+        s = false;
+        if(id(zone1).state == true) // Zone 1
+          s = true;
+        if(id(zone2).state == true) // Zone 2
+          s = true;
+        if(id(zone3).state == true) // Zone 3
+          s = true;
+        if(id(zone4).state == true) // Zone 4
+          s = true;
+        if(id(zone5).state == true) // Zone 5
+          s = true;
+        if(id(zone6).state == true) // Zone 6
+          s = true;
+        if(id(zone7).state == true) // Zone 7
+          s = true;
+        if(id(zone8).state == true) // Zone 8
+          s = true;
+        if(id(zone9).state == true) // Zone 9
+          s = true;
+        if(id(zone10).state == true) // Zone 10
+          s = true;
+        if(id(zone11).state == true) // Zone 11
+          s = true;
+        if(id(zone12).state == true) // Zone 12
+          s = true;
+        if(id(zone13).state == true) // Zone 13
+          s = true;
+        if(id(zone14).state == true) // Zone 14
+          s = true;
+        if(id(zone15).state == true) // Zone 15
+          s = true;
+        if(id(zone16).state == true) // Zone 16
+          s = true;
+        
+        id(arm_home_fault) = s;
+   
+ 
+        
+          
+  - interval: 3sec
+    then:
+      - switch.turn_on: heartbeat_led
+      - delay: 100ms
+      - switch.turn_off: heartbeat_led
+      - delay: 100ms
+      - switch.turn_on: heartbeat_led
+      - delay: 100ms
+      - switch.turn_off: heartbeat_led
+
+
+  
+sensor:
+  # TMP102 sensor on board 
+  # Commented out 8/4/23 due to 50mS delay in component causing warnings to be generated.
+#  - platform: tmp102
+#    name: "Board Temperature"
+#    update_interval: 1s
+#    address: 0x48
+#    id: board_temp
+
+  # ADC inputs
+  - platform: adc
+    id: vbatt_monitor
+    name: Vbatt_Monitor
+    attenuation: 11dB
+    accuracy_decimals: 2
+    update_interval: 10s
+    pin: GPIO39
+    filters:
+      multiply: 5.3
+    
+  - platform: adc
+    id: aux_monitor
+    name: Aux_Monitor
+    attenuation: 11dB
+    accuracy_decimals: 2
+    update_interval: 10s
+    pin: GPIO36
+    filters:
+      multiply: 5.3
+    
+  - platform: adc
+    id: siren_monitor
+    name: Siren_Monitor
+    attenuation: 11dB
+    accuracy_decimals: 2
+    update_interval: 10s
+    pin: GPIO35
+    filters:
+      multiply: 5.3
+
+binary_sensor:
+  #
+  # Digital Inputs
+  #
+  
+  # AC failure
+  - platform: gpio
+    id: ac_fail
+    name: AC-Fail
+    pin:
+      number: GPIO32
+      mode:
+        input: true
+      inverted: false      
+        
+  # Zones 1-8
+  
+  - platform: gpio
+    name: Zone_8
+    id: zone8
+    pin:
+      pca9554: pca9554_zones_1_8
+      number: 7
+      mode:
+        input: true
+      inverted: true # Inverted because the alarm component wants to see a low when the zone is normal
+
+  - platform: gpio
+    name: Zone_7
+    id: zone7
+    pin:
+      pca9554: pca9554_zones_1_8
+      number: 6
+      mode:
+        input: true
+      inverted: true  
+ 
+     
+  - platform: gpio
+    name: Zone_6
+    id: zone6
+    pin:
+      pca9554: pca9554_zones_1_8
+      number: 5
+      mode:
+        input: true
+      inverted: true
+ 
+      
+  - platform: gpio
+    name: Zone_5
+    id: zone5
+    pin:
+      pca9554: pca9554_zones_1_8
+      number: 4
+      mode:
+        input: true
+      inverted: true
+ 
+
+  - platform: gpio
+    name: Zone_4
+    id: zone4
+    pin:
+      pca9554: pca9554_zones_1_8
+      number: 3
+      mode:
+        input: true
+      inverted: true
+ 
+  - platform: gpio
+    name: Zone_3
+    id: zone3
+    pin:
+      pca9554: pca9554_zones_1_8
+      number: 2
+      mode:
+        input: true
+      inverted: true
+ 
+  - platform: gpio
+    name: Zone_2
+    id: zone2
+    pin:
+      pca9554: pca9554_zones_1_8
+      number: 1
+      mode:
+        input: true
+      inverted: true
+ 
+  - platform: gpio 
+    name: Zone_1
+    id: zone1 
+    pin:
+      pca9554: pca9554_zones_1_8
+      number: 0
+      mode:
+        input: true
+      inverted: true
+
+      
+   # Zones 9-16
+  
+  - platform: gpio
+    name: Zone_16
+    id: zone16
+    pin:
+      pca9554: pca9554_zones_9_16
+      number: 7
+      mode:
+        input: true
+      inverted: true
+
+  - platform: gpio
+    name: Zone_15
+    id: zone15
+    pin:
+      pca9554: pca9554_zones_9_16
+      number: 6
+      mode:
+        input: true
+      inverted: true
+     
+  - platform: gpio
+    name: Zone_14
+    id: zone14
+    pin:
+      pca9554: pca9554_zones_9_16
+      number: 5
+      mode:
+        input: true
+      inverted: true
+      
+  - platform: gpio
+    name: Zone_13
+    id: zone13
+    pin:
+      pca9554: pca9554_zones_9_16
+      number: 4
+      mode:
+        input: true
+      inverted: true
+
+  - platform: gpio
+    name: Zone_12
+    id: zone12
+    pin:
+      pca9554: pca9554_zones_9_16
+      number: 3
+      mode:
+        input: true
+      inverted: true
+
+  - platform: gpio
+    name: Zone_11
+    id: zone11
+    pin:
+      pca9554: pca9554_zones_9_16
+      number: 2
+      mode:
+        input: true
+      inverted: true
+ 
+  - platform: gpio
+    name: Zone_10
+    id: zone10
+    pin:
+      pca9554: pca9554_zones_9_16
+      number: 1
+      mode:
+        input: true
+      inverted: true
+
+      
+  - platform: gpio
+    name: Zone_9
+    id: zone9
+    pin:
+      pca9554: pca9554_zones_9_16
+      number: 0
+      mode:
+        input: true
+      inverted: true
+  
+  #
+  # Template binary sensors for arm home and away faults
+  #
+  
+  - platform: template
+    name: "Arm Away Ready"
+    lambda: |-
+      return id(arm_away_fault);
+        
+  - platform: template
+    name: "Arm Home Ready"
+    lambda: |-
+      return id(arm_home_fault);
+   
+      
+switch:
+  # Siren output
+  - platform: gpio
+    name: Siren
+    id: siren
+    pin:
+      number: GPIO02
+    inverted: false
+    
+  # Heartbeat LED
+  - platform: gpio
+    id: heartbeat_led
+    pin:
+      number: GPIO15
+      mode:
+        output: true
+      inverted: false
+ 
+  # AC disconnect
+  - platform: gpio
+    id: ac_disc
+    pin:
+      number: GPIO4
+      mode:
+        output: true
+      inverted: false
+
+output:
+  - platform: gpio
+    pin: GPIO12
+    id: rx_ena
+
+# Uncomment if using a kpa1
+#
+kpa1:
+  id: cbus # leave this as cbus as yaml above depends on it 
+  uart_id: cbus_uart # Uart connected to the CBUS on the SP8
+  acp_id: acp1  # Alarm control panel object
+  # Silence settings (true/false)
+  entry_silent: true # turns off the keypad buzzer during entry delay
+  exit_silent: true # turns off the keypad buzzer during exit delay
+  alarm_silent: true # turns off the keypad buzzer when the alarm is triggered
+
+uart:
+  # Uart for CBUS Honeywell/Residio keypad adapter (kpa1)
+  - id: cbus_uart
+    tx_pin: GPIO17
+    rx_pin: GPIO5
+    baud_rate: 19200
+  
+  
+
+
+
+
