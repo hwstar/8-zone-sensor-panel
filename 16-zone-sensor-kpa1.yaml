@@ -243,6 +243,8 @@ interval:
         //
         // Uncomment if using a kpa1
         //
+        // Zone mask of unused inputs - set bits indicate zone is masked off
+        new_fault_bits &= ~0x0;
         if(id(old_arm_away_fault_state) != new_fault_bits) {
           id(old_arm_away_fault_state) = new_fault_bits;
           id(cbus).update_system_ready(!(new_fault_bits > 0));
