@@ -555,7 +555,7 @@ void Kpa1::processRemoteErrorCounters_(ErrorCountersRemote * prec) {
 /*
  * Process a data packet received from the kpa1. This will normally be
  * 1 or more keypad digits entered by the user, but at power on,
- * additonal messages are sent so these are handled here as well.
+ * additional messages are sent so these are handled here as well.
  */
 
 void Kpa1::processDataPacket_() {
@@ -747,7 +747,7 @@ void Kpa1::backlightOn_() {
 }
 
 /*
- * Monitor the backlinght timer and turn off the backlight if
+ * Monitor the backlight timer and turn off the backlight if
  * the timer expires
  */
 
@@ -830,6 +830,13 @@ void Kpa1::readyLedHandler_() {
  */
 
 void Kpa1::receiveCodeDigitsHandler_() {
+  
+  // If the panel didn't have a state change for a command within a certain time window, reset the code
+  // and command receive flag as the command or code was likely invalid.
+  if ((this->codeAndCommandReceived_ == true) && TEST_TIMER(this->validCommandTimer_, COMMAND_VALID_FLAG_TIME_MS)) {
+    this->codeAndCommandReceived_ = false;
+  }
+  
   switch (this->codeReceiverState_) {
     case CR_IDLE:
       if (this->keypadDigitCount_) {  // Something to append?
@@ -900,10 +907,9 @@ void Kpa1::receiveCodeDigitsHandler_() {
             }
 
             if (valid_command) {
-              // Send chime once. Update display state
-              this->queuedKdu_.chime = CHIME_ONCE;
-              kduEnqueue_(&this->queuedKdu_);
-              this->queuedKdu_.chime = CHIME_NONE;
+              // Signal code and command have been received. Panel needs to validate
+              this->codeAndCommandReceived_ = true;
+              this->validCommandTimer_ = millis();
 
               // Send the command to the alarm control panel
               switch (command) {
@@ -964,6 +970,7 @@ void Kpa1::setup() {
   this->keypadBacklightState_ = false;
   this->kpa1Hello_ = false;
   this->helloReceived_ = false;
+  this->codeAndCommandReceived_ = false;
   uint32_t now = millis();
   this->powerOnTimer_ = now;
   this->backLightTimer_ = now;
@@ -972,6 +979,7 @@ void Kpa1::setup() {
   this->readyLedTimer_ = now;
   this->txTimer_ = now;
   this->remoteErrorCounterTimer_ = now;
+  this->validCommandTimer_ = now;
 
   // Initialize KDU
   this->queuedKdu_.armed = false;
@@ -1126,8 +1134,7 @@ void Kpa1::update_alarm_state(uint8_t status) {
       } else {
         lcdCopyString_(1, 0, NOT_READY_TEXT);
       }
-
-      this->queuedKdu_.chime = CHIME_NONE;
+      this->queuedKdu_.chime = (this->codeAndCommandReceived_) ? CHIME_ONCE : CHIME_NONE;
       this->queuedKdu_.armed = false;
       break;
 
@@ -1141,33 +1148,35 @@ void Kpa1::update_alarm_state(uint8_t status) {
     case esphome::alarm_control_panel::ACP_STATE_ARMED_AWAY:
       lcdCopyString_(0, 0, ARMED_AWAY_TEXT);
       lcdCopyString_(1, 0, "");  // Blank line
-      this->queuedKdu_.chime = CHIME_NONE;
+       this->queuedKdu_.chime = CHIME_NONE;
       this->queuedKdu_.armed = true;
       break;
 
     case esphome::alarm_control_panel::ACP_STATE_ARMED_NIGHT:
       lcdCopyString_(0, 0, ARMED_NIGHT_TEXT);
       lcdCopyString_(1, 0, "");  // Blank line
-      this->queuedKdu_.chime = CHIME_NONE;
+      this->queuedKdu_.chime = (this->codeAndCommandReceived_) ? CHIME_ONCE : CHIME_NONE;
       this->queuedKdu_.armed = true;
       break;
 
     case esphome::alarm_control_panel::ACP_STATE_ARMED_VACATION:
       lcdCopyString_(0, 0, ARMED_VACATION_TEXT);
       lcdCopyString_(1, 0, "");  // Blank line
-      this->queuedKdu_.chime = CHIME_NONE;
+      this->queuedKdu_.chime = (this->codeAndCommandReceived_) ? CHIME_ONCE : CHIME_NONE;
       this->queuedKdu_.armed = true;
       break;
 
     case esphome::alarm_control_panel::ACP_STATE_ARMED_CUSTOM_BYPASS:
       lcdCopyString_(0, 0, ARMED_CUSTOM_BYPASS_TEXT);
       lcdCopyString_(1, 0, "");  // Blank line
-      this->queuedKdu_.chime = CHIME_NONE;
+      this->queuedKdu_.chime = (this->codeAndCommandReceived_) ? CHIME_ONCE : CHIME_NONE;
       this->queuedKdu_.armed = true;
       break;
 
     case esphome::alarm_control_panel::ACP_STATE_PENDING:
-      backlightOn_();
+
+      backlightOn_(); 
+  
       if (this->keypadEntrySilent_) {
         this->queuedKdu_.chime = CHIME_NONE;
       } else {
@@ -1178,6 +1187,11 @@ void Kpa1::update_alarm_state(uint8_t status) {
       break;
 
     case esphome::alarm_control_panel::ACP_STATE_ARMING:
+      if (this->codeAndCommandReceived_){
+        this->queuedKdu_.chime = CHIME_ONCE; // Acknowledge arming command
+        kduEnqueue_(&this->queuedKdu_);
+        this->queuedKdu_.chime = CHIME_NONE;
+      }
       if (this->keypadExitSilent_) {
         this->queuedKdu_.chime = CHIME_NONE;
       } else {
@@ -1205,6 +1219,13 @@ void Kpa1::update_alarm_state(uint8_t status) {
   }
   // Queue to send to keypads
   kduEnqueue_(&this->queuedKdu_);
+  // Reset chime once
+  if(this->queuedKdu_.chime == CHIME_ONCE) {
+    this->queuedKdu_.chime = CHIME_NONE;
+    kduEnqueue_(&this->queuedKdu_);
+  }
+  // Reset code and command received flag
+  this->codeAndCommandReceived_ = false;
 }
 
 }  // namespace kpa1

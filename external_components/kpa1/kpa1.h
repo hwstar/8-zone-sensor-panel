@@ -14,7 +14,7 @@
 #define MAX_KEYPAD_MODEL_LENGTH 7
 #define RAW_PACKET_BUFFER_SIZE 64
 #define TX_DATA_PACKET_POOL_SIZE 4
-#define KDU_POOL_SIZE 4
+#define KDU_POOL_SIZE 8
 #define STUFF_CODE 0x00
 #define SOH 0x01
 #define STX 0x02
@@ -33,6 +33,7 @@
 #define KEYPAD_UPDATE_TIME 500
 #define READY_LED_UPDATE_TIME_MS 1000
 #define REMOTE_ERROR_COUNTER_UPDATE_TIME_MS 60000
+#define COMMAND_VALID_FLAG_TIME_MS 1000
 
 // Customizable text messages
 
@@ -188,6 +189,7 @@ class Kpa1 : public uart::UARTDevice, public Component {
   bool keypadEntrySilent_;
   bool keypadExitSilent_;
   bool keypadAlarmSilent_;
+  bool codeAndCommandReceived_;
   uint8_t txDataDequeuedPacket_[RAW_PACKET_BUFFER_SIZE];
   uint8_t txDataQueuedPacket_[RAW_PACKET_BUFFER_SIZE];
   uint8_t rxDataPacket_[RAW_PACKET_BUFFER_SIZE];
@@ -224,6 +226,7 @@ class Kpa1 : public uart::UARTDevice, public Component {
   uint32_t codeReceiverTimer_;
   uint32_t readyLedTimer_;
   uint32_t remoteErrorCounterTimer_;
+  uint32_t validCommandTimer_;
 
   void logDebugHex_(const char *desc, void *p, uint32_t length);
   uint16_t crc16_(const uint8_t *data, uint16_t len, uint16_t crc, uint16_t poly = 0x1021, bool refin = false,
