@@ -70,7 +70,7 @@ enum {
   CHIME_UNUSED,
   CHIME_LOUD
 };
-enum { KEYPAD_RECORD_TYPE_PRESENT = 0, KEYPAD_RECORD_KEYS };
+enum { KEYPAD_RECORD_TYPE_RESERVED = 0, KEYPAD_RECORD_KEYS };
 enum { RTYPE_HELLO = 0, RTYPE_SEND_ERROR_COUNTERS, RTYPE_UPDATE_KEYPAD, RTYPE_DATA_FROM_KEYPAD, RTYPE_ECHO };
 
 
@@ -314,28 +314,6 @@ class Kpa1 : public uart::UARTDevice, public Component {
   //
 
   void update_system_ready(bool ready);
-  
-  //
-  // Return number of keypads detected at power on
-  //
-  
-  uint8_t get_keypads_detected_at_power_on();
-  
-  //
-  // Return keypad address for a given keypad number
-  // number - the keypad number (0 to number of keypads - 1)
-  // address - a place to store the keypad address byte
-  // returns - true if successful
-  //
-  
-  bool get_keypad_address(uint8_t number, uint8_t *address);
-  
-  //
-  // Return keypad model for a given keypad number
-  // number - the keypad number (0 to number of keypads - 1)
-  // returns - pointer to model text string, or NULL if keypad number is invalid
-  //
-  const char *get_keypad_model(uint8_t number);
   
   //
   // Dumps all error counters to the log

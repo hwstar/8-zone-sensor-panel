@@ -445,64 +445,6 @@ bool Kpa1::kduDequeue_(KeypadDisplayUpdate *kdu) {
   return true;
 }
 
-/*
- * Process keypad present message sent at power up
- */
-
-void Kpa1::processKeypadPresentMessage_(PanelKeyboardEvent *pke) {
-  const char *keypad_type;
-  // Sanity checks
-  if (pke->record_type != 0) {
-    return;
-  }
-  if((pke->keypad_address < 16) && (pke->keypad_address > 23)) {
-    return; // Not a keypad
-  }
- 
-  if (pke->record_data_length != 7) {
-    return;
-  }
-  if ((pke->record_data[4] != 0x04) && (pke->record_data[6] != 0x04)) {
-    return;
-  }
-  switch(pke->record_data[5]) {
-    
-    case 0x04: // 6160 keypad
-      keypad_type = "6160";
-      break;
-    
-    case 0x06: // 6139 keypad
-      keypad_type = "6139";
-      break;
-    
-    default:
-      return;
-  }
-  ESP_LOGI(TAG, "Received keypad present from address: %d, type: %s", pke->keypad_address, keypad_type);
-  
-  uint8_t index;
-  if (ki_.count >= 8){
-    ESP_LOGE(TAG,"Keypad number out of range!");
-    return;
-  }
-  // See if it already exists in memory
-  for (index = 0; index < ki_.count; index++) {
-    if (ki_.ke[index].address == pke->keypad_address) {
-      break; // Found it
-    }
-  }
-  if (index >= 8){
-    ESP_LOGE(TAG,"Cannot keep track of more than 8 keypads!");
-    return;
-  }
-  
-  // Copy it into memory
-  ki_.ke[index].address = pke->keypad_address;
-  strncpy(ki_.ke[index].model, keypad_type, MAX_KEYPAD_MODEL_LENGTH);
-  ki_.ke[index].model[MAX_KEYPAD_MODEL_LENGTH - 1] = 0;
-  // Adjust count
-  ki_.count++;
-}
 
 /*
  *
@@ -582,12 +524,9 @@ void Kpa1::processDataPacket_() {
       // Determine what command we have and call the appropriate processing function
       PanelKeyboardEvent *pke =
           (PanelKeyboardEvent *) (this->rxDataPacket_ + sizeof(PanelPacketHeader) + sizeof(RecordTypeHeader));
-      if (pke->record_type == KEYPAD_RECORD_TYPE_PRESENT) {
-        processKeypadPresentMessage_(pke);
-      } else if (pke->record_type == KEYPAD_RECORD_KEYS) {
+      if (pke->record_type == KEYPAD_RECORD_KEYS) {
         processKeypadKeyPresses_(pke);
       }
-
       break;
     }
 
@@ -801,7 +740,7 @@ void Kpa1::keypadUpdateHandler_() {
   if (((uint32_t) millis()) - this->keypadUpdateTimer_ >= KEYPAD_UPDATE_TIME) {
     if (kduDequeue_(&this->queuedKdu_)) {
       this->keypadUpdateTimer_ = millis();
-      // Make TX data packet from Kaypad Display Packet, and add it to the TX queue
+      // Make TX data packet from Keypad Display Packet, and add it to the TX queue
       makeTxDataPacket_(this->txDataQueuedPacket_, RTYPE_UPDATE_KEYPAD, &this->queuedKdu_);
       queueTxPacket_(this->txDataQueuedPacket_);
     }
@@ -1107,31 +1046,6 @@ void Kpa1::update_system_ready(bool ready) {
 
 
 /*
- * Return number of keypads detected at power in
- */
- 
-uint8_t Kpa1::get_keypads_detected_at_power_on() {
-  return ki_.count;
-}
-
-/*
- * Return the address for a specific keypad number
- */
-
-bool Kpa1::get_keypad_address(uint8_t number, uint8_t *address) {
-  if (number > ki_.count) {
-    return false;
-  }
-  if (address) {
-    *address = ki_.ke[number].address;
-    return true;
-  }
-  else {
-    return false;
-  }
-}
-
-/*
  * Return true if we can't communicate with the kpa1
  */
 
@@ -1139,16 +1053,6 @@ bool Kpa1::get_keypad_comm_problem() {
   return this->commProblem_;
 }
 
-/*
- * Return the model number for a specific keypad number
- */
- 
-const char * Kpa1::get_keypad_model(uint8_t number) {
-   if (number > ki_.count) {
-    return NULL;
-  }
-  return (const char *) ki_.ke[number].model;
-}
 
 /*
  * This is called from YAML when the alarm panel state changes
