@@ -609,7 +609,7 @@ void Kpa1::commStateMachineHandler_() {
         // Send hello packet on initial power on after power on wait time
         ESP_LOGI(TAG, "Sending HELLO to the KPA1");
         makeTxDataPacket_(this->txDataDequeuedPacket_, RTYPE_HELLO);
-        this->packetStateFlags_ |= PSF_TX_BUSY;
+        this->packetStateFlags_ = (PSF_TX_BUSY | PSF_INIT);
         this->txRetries_ = 0;
         this->packetState_ = PRX_TX;
       }
@@ -653,9 +653,9 @@ void Kpa1::commStateMachineHandler_() {
         } else {
           ESP_LL1(TAG, "TX packet sequence number %d successfully Ack'ed", pph->seq_num);
         }
-
+        
         // Allow reception and transmission.
-        this->packetStateFlags_ &= ~(PSF_RX_FLAGS | PSF_TX_BUSY);
+        this->packetStateFlags_ &= ~(PSF_RX_FLAGS | PSF_TX_BUSY | PSF_INIT);
       } else if (this->packetStateFlags_ & PSF_TX_BUSY) {
         // If NAK
         if (this->packetStateFlags_ & PSF_RX_NAK) {
@@ -671,8 +671,15 @@ void Kpa1::commStateMachineHandler_() {
           } else {
             // The link is really messed up, or there is a bug.  We have to discard the packet
             ESP_LOGE(TAG, "Transmit NAK hard error");
+            this->commProblem_ = true;
             this->ec_local_.tx_hard_errors++;
             this->packetStateFlags_ &= ~(PSF_RX_FLAGS | PSF_TX_BUSY);
+            // If initial HELLO then back off and wait, then try again
+            if (this->packetStateFlags_ & PSF_INIT) {
+              ESP_LL1(TAG, "Backing off after comm. failure");
+              this->helloBackoffTimer_ = millis();
+              this->packetState_ = PRX_HELLO_BACKOFF;
+            }
           }
         }
         // If packet transmit timeout
@@ -688,8 +695,15 @@ void Kpa1::commStateMachineHandler_() {
           } else {
             // The link is really messed up, or there is a bug.  We have to discard the packet
             ESP_LOGE(TAG, "Transmit time out hard error");
+            this->commProblem_ = true;
             this->ec_local_.tx_hard_errors++;
             this->packetStateFlags_ &= ~(PSF_RX_FLAGS | PSF_TX_BUSY);
+            // If initial HELLO then back off and wait, then try again
+            if (this->packetStateFlags_ & PSF_INIT) {
+              ESP_LL1(TAG, "Backing off after comm. failure");
+              this->helloBackoffTimer_ = millis();
+              this->packetState_ = PRX_HELLO_BACKOFF;
+            }
           }
         }
       }
@@ -725,6 +739,15 @@ void Kpa1::commStateMachineHandler_() {
       txFrame_(this->txDataDequeuedPacket_);
       this->packetState_ = PRX_STATE_IDLE;
       break;
+      
+    case PRX_HELLO_BACKOFF:
+      // Wait backoff time for hello and try again
+      if (TEST_TIMER(helloBackoffTimer_, HELLO_BACKOFF_TIME_MS)) {
+        this->packetStateFlags_ = 0;
+        this->packetState_ = PRX_STATE_INIT;
+      }
+      break;
+      
 
     default:
       // Catch all
@@ -971,6 +994,7 @@ void Kpa1::setup() {
   this->kpa1Hello_ = false;
   this->helloReceived_ = false;
   this->codeAndCommandReceived_ = false;
+  this->commProblem_ = false;
   uint32_t now = millis();
   this->powerOnTimer_ = now;
   this->backLightTimer_ = now;
@@ -980,6 +1004,7 @@ void Kpa1::setup() {
   this->txTimer_ = now;
   this->remoteErrorCounterTimer_ = now;
   this->validCommandTimer_ = now;
+  this->helloBackoffTimer_ = now;
 
   // Initialize KDU
   this->queuedKdu_.armed = false;
@@ -1104,6 +1129,14 @@ bool Kpa1::get_keypad_address(uint8_t number, uint8_t *address) {
   else {
     return false;
   }
+}
+
+/*
+ * Return true if we can't communicate with the kpa1
+ */
+
+bool Kpa1::get_keypad_comm_problem() {
+  return this->commProblem_;
 }
 
 /*

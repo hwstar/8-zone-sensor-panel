@@ -547,7 +547,20 @@ binary_sensor:
     name: "Arm Home Ready"
     lambda: |-
       return id(arm_home_fault);
-   
+     
+     
+  #
+  # ***** kpa1 specific *****
+  #
+  
+  - platform: template
+    name: "Keypad Comm. Problem"
+    lambda: |-
+      return id(cbus).get_keypad_comm_problem();
+  #
+  # ***** end kpa1 specific *****
+  #
+
       
 switch:
   # Siren output

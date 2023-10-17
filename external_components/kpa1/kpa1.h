@@ -34,6 +34,7 @@
 #define READY_LED_UPDATE_TIME_MS 1000
 #define REMOTE_ERROR_COUNTER_UPDATE_TIME_MS 60000
 #define COMMAND_VALID_FLAG_TIME_MS 1000
+#define HELLO_BACKOFF_TIME_MS 30000
 
 // Customizable text messages
 
@@ -80,11 +81,12 @@ enum {
   PSF_RX_NAK = 0x02,
   PSF_RX_DATA = 0x04,
   PSF_BAD_PACKET = 0x08,
+  PSF_INIT = 0x40,
   PSF_TX_BUSY = 0x80,
   PSF_RX_FLAGS = 0x0F
 };
 enum { RX_GOT_NOTHING = 0, RX_GOT_STX, RX_GOT_ETX, RX_GOT_DATA };
-enum { PRX_STATE_INIT = 0, PRX_STATE_IDLE, PRX_TX, PRX_TX_WAIT_ACK };
+enum { PRX_STATE_INIT = 0, PRX_STATE_IDLE, PRX_TX, PRX_TX_WAIT_ACK, PRX_HELLO_BACKOFF};
 enum { RF_STATE_IDLE = 0, RF_WAIT_DATA_ETX, RF_WAIT_CLEAR_FLAGS };
 enum { SRX_STATE_IDLE = 0, SRX_STATE_WAIT_SECOND };
 
@@ -190,6 +192,7 @@ class Kpa1 : public uart::UARTDevice, public Component {
   bool keypadExitSilent_;
   bool keypadAlarmSilent_;
   bool codeAndCommandReceived_;
+  bool commProblem_;
   uint8_t txDataDequeuedPacket_[RAW_PACKET_BUFFER_SIZE];
   uint8_t txDataQueuedPacket_[RAW_PACKET_BUFFER_SIZE];
   uint8_t rxDataPacket_[RAW_PACKET_BUFFER_SIZE];
@@ -227,6 +230,7 @@ class Kpa1 : public uart::UARTDevice, public Component {
   uint32_t readyLedTimer_;
   uint32_t remoteErrorCounterTimer_;
   uint32_t validCommandTimer_;
+  uint32_t helloBackoffTimer_;
 
   void logDebugHex_(const char *desc, void *p, uint32_t length);
   uint16_t crc16_(const uint8_t *data, uint16_t len, uint16_t crc, uint16_t poly = 0x1021, bool refin = false,
@@ -255,6 +259,7 @@ class Kpa1 : public uart::UARTDevice, public Component {
   void lcdCopyString_(int line, int pos, const char *text);
   void remoteErrorCountersHandler_();
   void processRemoteErrorCounters_(ErrorCountersRemote * prec);
+  bool keypadCommProblem_;
 
  public:
   Kpa1();
@@ -316,7 +321,6 @@ class Kpa1 : public uart::UARTDevice, public Component {
   
   uint8_t get_keypads_detected_at_power_on();
   
-  
   //
   // Return keypad address for a given keypad number
   // number - the keypad number (0 to number of keypads - 1)
@@ -339,6 +343,12 @@ class Kpa1 : public uart::UARTDevice, public Component {
   
   void dump_error_counters();
 
+  //
+  // Returns true if there's a communication problem with the keypads.
+  //
+  
+  bool get_keypad_comm_problem();
+  
   
   
 };
