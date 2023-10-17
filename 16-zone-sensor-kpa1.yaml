@@ -17,12 +17,13 @@ esphome:
       - output.turn_on: rx_ena
       - delay: 1s
       # Send status update to Kpa1 as Alarm Panel does not initially send its state.
-      #  Uncomment if using kpa1
+      #  ***** kpa1 specific *****
       - lambda: |-
           // Alarm panel returns an enum
           esphome::alarm_control_panel::AlarmControlPanelState status = id(acp1)->get_state();
           // Transmit state to keypads on power up
           id(cbus).update_alarm_state((uint8_t) status);
+      # ***** end kpa1 specific *****
 #
 # Ethernet
 #
@@ -35,14 +36,19 @@ ethernet:
   phy_addr: 1
   power_pin: GPIO16
 
-# Uncomment for Kpa1 Honeywell to SP8 keypad adapter
+#
+# kpa1 specific
 #
 external_components:
   - source:
       type: local
       path: external_components
     components: ["kpa1"] 
- 
+#
+# end kpa1 specific
+#
+
+
  
 globals:
   - id: arm_away_fault
@@ -92,9 +98,10 @@ alarm_control_panel:
     on_state:
       then: # Add things to do on state changes here.
         - lambda: !lambda |-
-            // Uncomment if using a kpa1
+            // ***** kpa1 specific *****
             id(cbus)->update_alarm_state(id(acp1)->get_state()); // Send state change to Kpa1 via cbus
             ESP_LOGI("AlarmPanel", "State change %s", alarm_control_panel_state_to_string(id(acp1)->get_state()));
+            // ***** end kpa1 specific *****
         
     on_triggered:
       then: # Add things to do when triggered here. e.g. sound siren, send a message etc.
@@ -238,10 +245,10 @@ interval:
         // Update the arm away fault state
         id(arm_away_fault) = (new_fault_bits != 0ULL); 
         
+        // ***** kpa1 specific *****
         // If we see a change in the state of the fault 
         // bits we let the keypads know here.
         //
-        // Uncomment if using a kpa1
         //
         // Zone mask of unused inputs - set bits indicate zone is masked off
         new_fault_bits &= ~0x0;
@@ -249,6 +256,7 @@ interval:
           id(old_arm_away_fault_state) = new_fault_bits;
           id(cbus).update_system_ready(!(new_fault_bits > 0));
         }
+        // ***** end kpa1 specific *****
         
         // For home case
         s = false;
@@ -573,7 +581,8 @@ output:
     pin: GPIO12
     id: rx_ena
 
-# Uncomment if using a kpa1
+#
+# ***** kpa1 specific *****
 #
 kpa1:
   id: cbus # leave this as cbus as yaml above depends on it 
@@ -590,7 +599,10 @@ uart:
     tx_pin: GPIO17
     rx_pin: GPIO5
     baud_rate: 19200
-  
+
+#
+# ***** end kpa1 specific *****
+#
   
 
 
