@@ -11,10 +11,11 @@
 #define CODE_DIGITS_MAX 4
 #define MAX_KEYPAD_LINE 16
 #define MAX_KEYPAD_DATA_LENGTH 16
-#define MAX_KEYPAD_MODEL_LENGTH 7
 #define RAW_PACKET_BUFFER_SIZE 64
-#define TX_DATA_PACKET_POOL_SIZE 4
+#define TX_DATA_PACKET_POOL_SIZE 8
 #define KDU_POOL_SIZE 8
+#define KP_MODEL_LEN 6
+#define KP_INFO_MAX_KEYPADS 8
 #define STUFF_CODE 0x00
 #define SOH 0x01
 #define STX 0x02
@@ -71,7 +72,7 @@ enum {
   CHIME_LOUD
 };
 enum { KEYPAD_RECORD_TYPE_RESERVED = 0, KEYPAD_RECORD_KEYS };
-enum { RTYPE_HELLO = 0, RTYPE_SEND_ERROR_COUNTERS, RTYPE_UPDATE_KEYPAD, RTYPE_DATA_FROM_KEYPAD, RTYPE_ECHO };
+enum { RTYPE_HELLO = 0, RTYPE_SEND_ERROR_COUNTERS, RTYPE_UPDATE_KEYPAD, RTYPE_DATA_FROM_KEYPAD, RTYPE_ECHO, RTYPE_CONN_KEYPADS  };
 
 
 enum { CR_IDLE = 0, CR_BUSY };
@@ -93,16 +94,6 @@ enum { SRX_STATE_IDLE = 0, SRX_STATE_WAIT_SECOND };
 /*
  * Local structs not used outside of this component
  */
-
-typedef struct alignas(1) KeypadElement {
-  uint8_t address;
-  char model[MAX_KEYPAD_MODEL_LENGTH];
-} KeypadElement;
-
-typedef struct alignas(1) KeypadInfo {
-  uint8_t count;
-  KeypadElement ke[8];
-} KeypadInfo;
 
 typedef struct alignas(1) ErrorCountersLocal {
   uint32_t tx_soft_errors;
@@ -157,6 +148,14 @@ typedef struct alignas(1) PanelKeyboardEvent {
   uint8_t record_data[MAX_KEYPAD_DATA_LENGTH];
 } PanelKeyboardEvent;
 
+typedef struct alignas(1) PanelKeypadType {
+  uint8_t valid;
+  uint8_t model[KP_MODEL_LEN];
+} PanelKeypadType;
+
+typedef struct alignas(1) PanelKeypadInfo {
+  PanelKeypadType info[KP_INFO_MAX_KEYPADS];
+} PanelKeypadInfo;
 
 typedef struct alignas(1) ErrorCountersRemote {
   uint32_t tx_soft_errors;
@@ -179,7 +178,7 @@ class Kpa1 : public uart::UARTDevice, public Component {
   alarm_control_panel::AlarmControlPanel *acp_;
   ErrorCountersLocal ec_local_;
   ErrorCountersRemote ec_remote_;
-  KeypadInfo ki_;
+  PanelKeypadInfo ki_;
   PanelPacketAckNak txAckNakPacket_;
   KeypadDisplayUpdate queuedKdu_;
   KeypadDisplayUpdate dequeuedKdu_;
@@ -259,7 +258,7 @@ class Kpa1 : public uart::UARTDevice, public Component {
   void lcdCopyString_(int line, int pos, const char *text);
   void remoteErrorCountersHandler_();
   void processRemoteErrorCounters_(ErrorCountersRemote * prec);
-  bool keypadCommProblem_;
+  void processKeypadInfo_(PanelKeypadInfo * prec);
 
  public:
   Kpa1();
@@ -327,8 +326,23 @@ class Kpa1 : public uart::UARTDevice, public Component {
   
   bool get_keypad_comm_problem();
   
+  //
+  // Return number of keypads connected
+  //
+  
+  uint8_t get_keypad_count();
   
   
+  //
+  // Return the keypad data as a c string in the following format:
+  //
+  // model@aa,model@aa,....
+  //
+  // Where: aa is the keypad address in decimal
+  // and model is the keypad model number.
+  
+  const char *get_keypad_info();
+
 };
 
 }  // namespace kpa1

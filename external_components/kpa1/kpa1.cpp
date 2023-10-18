@@ -172,6 +172,10 @@ void Kpa1::makeTxDataPacket_(uint8_t *packet, uint8_t record_type, void *data) {
     case RTYPE_ECHO:
       clipped_data_len = sizeof(EchoCommand);
       break;
+      
+    case RTYPE_CONN_KEYPADS:
+      clipped_data_len = 0;
+      break;
 
     default:
       return;  // Don't know what the record type is
@@ -484,7 +488,7 @@ void Kpa1::processKeypadKeyPresses_(PanelKeyboardEvent *pke) {
 }
 
 /*
- * Process upload of the error counters on the kpa1
+ * Process upload of the error counters from the kpa1
  */
 
 void Kpa1::processRemoteErrorCounters_(ErrorCountersRemote * prec) {
@@ -492,6 +496,15 @@ void Kpa1::processRemoteErrorCounters_(ErrorCountersRemote * prec) {
   memcpy(&ec_remote_, prec, sizeof(ErrorCountersRemote));
 }
 
+/*
+ * Process upload of keypad info from the kpa1
+ */
+
+void Kpa1::processKeypadInfo_(PanelKeypadInfo * prec) {
+  memcpy(&ki_, prec, sizeof(PanelKeypadInfo));
+  ESP_LL1(TAG, "Keypad information received");
+  //logDebugHex_("Keypad information:",&ki_, sizeof(PanelKeypadInfo));
+}
 
 
 /*
@@ -518,8 +531,13 @@ void Kpa1::processDataPacket_() {
       processRemoteErrorCounters_(prec);
       break;
     }
+    
+    case RTYPE_CONN_KEYPADS: {
+      PanelKeypadInfo *prec = (PanelKeypadInfo *) (this->rxDataPacket_ + sizeof(PanelPacketHeader) + sizeof(RecordTypeHeader));
+      processKeypadInfo_(prec);
+      break;
+    }
       
-
     case RTYPE_DATA_FROM_KEYPAD: {
       // Determine what command we have and call the appropriate processing function
       PanelKeyboardEvent *pke =
@@ -575,6 +593,10 @@ void Kpa1::commStateMachineHandler_() {
           ESP_LL1(TAG, "Unlocking the TX queue");
           this->helloReceived_ = this->kpa1Hello_;
           this->kpa1Hello_ = false;
+          // Send a request for the keypad info
+          ESP_LL1(TAG, "Requesting connected keypads");
+          makeTxDataPacket_(this->txDataQueuedPacket_,RTYPE_CONN_KEYPADS);
+          queueTxPacket_(this->txDataQueuedPacket_);
         }
 
         // Allow reception of the next packet
@@ -956,14 +978,12 @@ void Kpa1::setup() {
   memset(this->queuedKdu_.line1, ' ', MAX_KEYPAD_LINE);
   memset(this->queuedKdu_.line2, ' ', MAX_KEYPAD_LINE);
     
-  // Initialize KI
-  this->ki_.count = 0;
-
-
   // Clear local error counters
   memset(&this->ec_local_, 0, sizeof(ErrorCountersLocal));
   // Clear remote error counters
   memset(&this->ec_remote_, 0, sizeof(ErrorCountersRemote));
+  // Clear the keypad info
+  memset(&this->ki_, 0, sizeof(PanelKeypadInfo));
 }
 
 /*
@@ -1051,6 +1071,66 @@ void Kpa1::update_system_ready(bool ready) {
 
 bool Kpa1::get_keypad_comm_problem() {
   return this->commProblem_;
+}
+
+
+/*
+ * Return list of kpa1 addresses
+ */
+  
+ 
+uint8_t Kpa1::get_keypad_count() {
+  uint8_t i, count = 0;
+  for ( i = 0; i < KP_INFO_MAX_KEYPADS ; i++) {
+    if (ki_.info[i].valid) {
+      count++;
+    }
+  }
+  ESP_LL1(TAG, "Number of keypads: %d", count);
+  return count;
+}
+
+/*
+ * Return keypad model for a given address
+ */  
+   
+const char *Kpa1::get_keypad_info() {
+  const char *model;
+  char elem[4 + KP_MODEL_LEN + 1];
+  static char info[KP_INFO_MAX_KEYPADS * (KP_MODEL_LEN  + 4) + 2];
+  
+  
+  info[0] = 0;
+  
+  for(int i = 0; i < KP_INFO_MAX_KEYPADS; i++) {
+    if (ki_.info[i].valid) {
+      // Set model string
+      if ((ki_.info[i].model[3] == 0x04) && 
+      (ki_.info[i].model[4] == 0x04) &&
+      (ki_.info[i].model[5] == 0x04)) {
+        model = "6160";
+      }
+      else if ((ki_.info[i].model[3] == 0x04) && 
+      (ki_.info[i].model[4] == 0x06) &&
+      (ki_.info[i].model[5] == 0x04)) {
+        model = "6139";
+      }
+      else {
+        model = "UNK";
+      }
+      snprintf(elem, sizeof(elem), "%s@%02d,", model, 16 + i );
+      elem[sizeof(elem) - 1] = 0;
+      //ESP_LL1(TAG, "Keypad elem: %s", elem);
+      strcat(info, elem);
+    }
+  }
+  // Delete extra comma
+  if (strlen(info)){
+    info[strlen(info) - 1] = 0;
+  }
+  // Return info string
+  ESP_LL1(TAG, "Keypad info: %s", info);
+  return (const char *) info;
 }
 
 
