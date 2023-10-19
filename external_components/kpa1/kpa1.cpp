@@ -20,7 +20,6 @@ Kpa1::Kpa1() {
  */
 
 void Kpa1::logDebugHex_(const char *desc, void *p, uint32_t length) {
-#if ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_DEBUG
   char hex_string[16 * 3 + 1];
   uint32_t lines;
   uint32_t len;
@@ -47,7 +46,6 @@ void Kpa1::logDebugHex_(const char *desc, void *p, uint32_t length) {
     }
     ESP_LL1(TAG, "%s", hex_string);
   }
-#endif
 }
 
 /*
@@ -360,6 +358,7 @@ void Kpa1::txFrame_(void *tx_packet_in) {
   if (a->type == PT_DATA_SHORT) {
     tx_length = sizeof(PanelPacketHeader) + sizeof(uint16_t) +
                 h->payload_len;  // Get total packet length (3 bytes of header plus 2 bytes of CRC)
+    //logDebugHex_("TX packet contents:", tx_packet_in, tx_length);
   } else if ((a->type == PT_ACK) || (a->type == PT_NAK)) {
     tx_length = sizeof(PanelPacketAckNak);
   } else {
@@ -787,9 +786,11 @@ void Kpa1::remoteErrorCountersHandler_() {
 
 /*
  * Ready led handler. Throttles the update of the ready LED.
+ * Handles chime when sensor opened.
  */
 
 void Kpa1::readyLedHandler_() {
+  uint8_t chime_new = CHIME_NONE, chime_save;
   if (TEST_TIMER(this->readyLedTimer_, READY_LED_UPDATE_TIME_MS)) {
     if (this->fastReadyLed_ != this->queuedKdu_.ready) {
       this->readyLedTimer_ = millis();
@@ -800,12 +801,15 @@ void Kpa1::readyLedHandler_() {
         if (this->fastReadyLed_) {
           lcdCopyString_(1, 0, READY_TO_ARM_TEXT);
         } else {
+          chime_new = (this->fastChime_) ? CHIME_THREE_TIMES : CHIME_NONE; // Sensor opened
           lcdCopyString_(1, 0, NOT_READY_TEXT);
         }
       }
-
+      chime_save = this->queuedKdu_.chime;
+      this->queuedKdu_.chime = chime_new;
       this->queuedKdu_.ready = this->fastReadyLed_;
       kduEnqueue_(&this->queuedKdu_);
+      this->queuedKdu_.chime = chime_save;
     }
   }
 }
@@ -959,6 +963,9 @@ void Kpa1::setup() {
   this->helloReceived_ = false;
   this->codeAndCommandReceived_ = false;
   this->commProblem_ = false;
+  this->fastReadyLed_ = false;
+  this->fastChime_ = false;
+  
   uint32_t now = millis();
   this->powerOnTimer_ = now;
   this->backLightTimer_ = now;
@@ -1065,6 +1072,22 @@ void Kpa1::set_keypad_alarm_silent(bool silent) { this->keypadAlarmSilent_ = sil
 
 void Kpa1::update_system_ready(bool ready) {
   this->fastReadyLed_ = ready;  // Save a copy for testing later
+}
+
+/*
+ * Update the entry chime state
+ */
+
+void Kpa1::update_system_entry_chime(bool chime) {
+  this->fastChime_ = chime; // Save copy for testing later
+}
+
+/*
+ * Return whether or not there are any faulted zones
+ */
+
+bool Kpa1::check_for_zone_faults(uint64_t zone_state_bits, uint64_t zone_bits_mask) {
+  return (bool) zone_state_bits & zone_bits_mask;
 }
 
 

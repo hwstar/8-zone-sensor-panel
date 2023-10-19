@@ -187,6 +187,7 @@ class Kpa1 : public uart::UARTDevice, public Component {
   bool kpa1Hello_;
   bool helloReceived_;
   bool fastReadyLed_;
+  bool fastChime_;
   bool keypadEntrySilent_;
   bool keypadExitSilent_;
   bool keypadAlarmSilent_;
@@ -305,7 +306,7 @@ class Kpa1 : public uart::UARTDevice, public Component {
   //
 
   void update_alarm_state(uint8_t status);
-
+  
   //
   // Update system ready state
   // The yaml code should call this whenever the system ready state changes
@@ -313,6 +314,27 @@ class Kpa1 : public uart::UARTDevice, public Component {
   //
 
   void update_system_ready(bool ready);
+  
+  //
+  // Update system entry chime state
+  // The yaml code should call this whenever the system ready state changes
+  // for those sensors which are not internal, such as PIR's
+  //
+  
+  void update_system_entry_chime(bool chime);
+  
+  
+  //
+  //
+  // Check for zone faults. Return true if any of the zone state bits
+  // are true after masking, or false if all zone bits after masking are false
+  //
+  // To mask a zone, set the appropriate mask bit to zero in the zone_bits mask.
+  //
+  
+  bool check_for_zone_faults(uint64_t zone_state_bits, uint64_t zone_bits_mask);
+  
+  
   
   //
   // Dumps all error counters to the log
