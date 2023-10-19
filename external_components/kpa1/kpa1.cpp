@@ -1,7 +1,7 @@
 #include "kpa1.h"
 #include "esphome/core/log.h"
 
-#define ESP_LL1 ESP_LOGI
+#define ESP_LL1 ESP_LOGD
 #define ESP_LL2 ESP_LOGD
 
 namespace esphome {
@@ -20,6 +20,7 @@ Kpa1::Kpa1() {
  */
 
 void Kpa1::logDebugHex_(const char *desc, void *p, uint32_t length) {
+#if ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_DEBUG
   char hex_string[16 * 3 + 1];
   uint32_t lines;
   uint32_t len;
@@ -46,6 +47,7 @@ void Kpa1::logDebugHex_(const char *desc, void *p, uint32_t length) {
     }
     ESP_LL1(TAG, "%s", hex_string);
   }
+#endif
 }
 
 /*
@@ -288,7 +290,7 @@ void Kpa1::rxFrame_() {
       break;
 
     case RF_WAIT_DATA_ETX:
-      if (((uint32_t) millis()) - this->rxFrameTimer_ > RX_FRAME_TIMEOUT_MS) {
+      if (TEST_TIMER(this->rxFrameTimer_, RX_FRAME_TIMEOUT_MS)) {
         // We timed out, start over
         this->ec_local_.rx_frame_timeouts++;
         this->rxFrameState_ = RF_STATE_IDLE;
@@ -379,7 +381,7 @@ void Kpa1::txFrame_(void *tx_packet_in) {
  */
 
 bool Kpa1::queueTxPacket_(void *tx_packet_in) {
-  uint8_t next_head = (this->txDataPoolHead_ + 1 >= TX_DATA_PACKET_POOL_SIZE) ? 0 : this->txDataPoolHead_ + 1;
+  uint8_t next_head = NEXT_QUEUE_INDEX(this->txDataPoolHead_, TX_DATA_PACKET_POOL_SIZE);
   // If pool is full, return false
   if (next_head == this->txDataPoolTail_) {
     ESP_LOGW(TAG, "TX packet queue full, discarding message");
@@ -404,7 +406,7 @@ bool Kpa1::deQueueTxPacket_(void *tx_packet_out) {
   if (this->txDataPoolHead_ == this->txDataPoolTail_) {
     return false;
   }
-  uint8_t next_tail = (this->txDataPoolTail_ + 1 >= TX_DATA_PACKET_POOL_SIZE) ? 0 : this->txDataPoolTail_ + 1;
+  uint8_t next_tail = NEXT_QUEUE_INDEX(this->txDataPoolTail_, TX_DATA_PACKET_POOL_SIZE);
 
   // Determine how much to transfer
   PanelPacketHeader *h = (PanelPacketHeader *) txPacketPool_[this->txDataPoolTail_];
@@ -483,7 +485,7 @@ void Kpa1::processKeypadKeyPresses_(PanelKeyboardEvent *pke) {
       keypadDigitsReceived_[i] = c;
     }
   } else {
-    ESP_LOGW(TAG, "Code digit buffer in use, digits ignored");
+    ESP_LOGW(TAG, "Code digit buffer in use, digits ignored from other keypad");
   }
 }
 
@@ -671,7 +673,7 @@ void Kpa1::commStateMachineHandler_() {
       // If any bad packet
       else if (this->packetStateFlags_ & PSF_BAD_PACKET) {
         ESP_LL1(TAG, "Received bad packet, sending NAK");
-        logDebugHex_("Bad bytes", this->rxDataPacket_, 16);
+        //logDebugHex_("Bad bytes", this->rxDataPacket_, 16);
         // Packet failed validation send NAK
         makeTxAckNakPacket_(PT_NAK, 0);
         // Transmit it
@@ -703,7 +705,7 @@ void Kpa1::commStateMachineHandler_() {
       
     case PRX_HELLO_BACKOFF:
       // Wait backoff time for hello and try again
-      if (TEST_TIMER(helloBackoffTimer_, HELLO_BACKOFF_TIME_MS)) {
+      if (TEST_TIMER(this->helloBackoffTimer_, HELLO_BACKOFF_TIME_MS)) {
         this->packetStateFlags_ = 0;
         this->packetState_ = PRX_STATE_INIT;
       }
@@ -759,7 +761,7 @@ void Kpa1::backlightHandler_() {
  */
 
 void Kpa1::keypadUpdateHandler_() {
-  if (((uint32_t) millis()) - this->keypadUpdateTimer_ >= KEYPAD_UPDATE_TIME) {
+  if (TEST_TIMER(this->keypadUpdateTimer_, KEYPAD_UPDATE_TIME)) {
     if (kduDequeue_(&this->queuedKdu_)) {
       this->keypadUpdateTimer_ = millis();
       // Make TX data packet from Keypad Display Packet, and add it to the TX queue
@@ -834,7 +836,7 @@ void Kpa1::receiveCodeDigitsHandler_() {
 
     case CR_BUSY:
       // Interdigit time out check
-      if (((uint32_t) millis()) - this->codeReceiverTimer_ > CODE_INTERDIGIT_TIMEOUT_MS) {
+      if (TEST_TIMER(this->codeReceiverTimer_, CODE_INTERDIGIT_TIMEOUT_MS)) {
         ESP_LL1(TAG, "Interdigit timeout reached");
         this->codeDigitCount_ = 0;
         this->codeDigitSourceAddress_ = 0;
@@ -891,6 +893,7 @@ void Kpa1::receiveCodeDigitsHandler_() {
             }
 
             if (valid_command) {
+              ESP_LOGI(TAG, "Code and command received from keypad address %d", this->codeDigitSourceAddress_);
               // Signal code and command have been received. Panel needs to validate
               this->codeAndCommandReceived_ = true;
               this->validCommandTimer_ = millis();
@@ -1086,7 +1089,7 @@ uint8_t Kpa1::get_keypad_count() {
       count++;
     }
   }
-  ESP_LL1(TAG, "Number of keypads: %d", count);
+  ESP_LOGI(TAG, "Number of keypads: %d", count);
   return count;
 }
 
@@ -1129,7 +1132,7 @@ const char *Kpa1::get_keypad_info() {
     info[strlen(info) - 1] = 0;
   }
   // Return info string
-  ESP_LL1(TAG, "Keypad info: %s", info);
+  ESP_LOGI(TAG, "Keypad info: %s", info);
   return (const char *) info;
 }
 
