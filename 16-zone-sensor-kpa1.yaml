@@ -259,11 +259,11 @@ interval:
           id(cbus).update_system_ready(!(id(arm_away_fault)));
         }
         // Uncomment for entry chime support
-        if(id(arm_stay_fault) != id(arm_stay_fault_old)){
-          ESP_LOGI("yaml", "Alarm stay fault: %d", id(arm_stay_fault));
-          id(arm_stay_fault_old) = id(arm_stay_fault);
-          id(cbus).update_system_entry_chime(id(arm_stay_fault));
-        }
+        //if(id(arm_stay_fault) != id(arm_stay_fault_old)){
+        //  ESP_LOGI("yaml", "Alarm stay fault: %d", id(arm_stay_fault));
+        //  id(arm_stay_fault_old) = id(arm_stay_fault);
+        //  id(cbus).update_system_entry_chime(id(arm_stay_fault));
+        //}
    
 
      
