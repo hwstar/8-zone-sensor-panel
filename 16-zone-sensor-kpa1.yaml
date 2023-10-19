@@ -255,7 +255,6 @@ interval:
         if(id(arm_away_fault) != id(arm_away_fault_old)){
           ESP_LOGI("yaml", "Alarm away fault new: %d, old %d: ", id(arm_away_fault), id(arm_away_fault_old));
           id(arm_away_fault_old) = id(arm_away_fault);
-          ESP_LOGI("yaml", "Alarm away fault inverted: %d", !id(arm_away_fault));
           id(cbus).update_system_ready(!(id(arm_away_fault)));
         }
         // Uncomment for entry chime support
