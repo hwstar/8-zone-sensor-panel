@@ -17,13 +17,19 @@ esphome:
       - output.turn_on: rx_ena
       - delay: 1s
       # Send status update to Kpa1 as Alarm Panel does not initially send its state.
-      #  ***** kpa1 specific *****
       - lambda: |-
           // Alarm panel returns an enum
           esphome::alarm_control_panel::AlarmControlPanelState status = id(acp1)->get_state();
           // Transmit state to keypads on power up
           id(cbus).update_alarm_state((uint8_t) status);
-      # ***** end kpa1 specific *****
+          
+      - delay: 30s # Test only
+      
+      - lambda: |-
+          id(cbus).get_keypad_count();
+          id(cbus).get_keypad_info();
+      
+ 
 #
 # Ethernet
 #
@@ -36,42 +42,42 @@ ethernet:
   phy_addr: 1
   power_pin: GPIO16
 
-#
-# kpa1 specific
-#
+
 external_components:
   - source:
       type: local
       path: external_components
     components: ["kpa1"] 
-#
-# end kpa1 specific
-#
 
 
- 
 globals:
   - id: arm_away_fault
     type: bool
     restore_value: no
     initial_value: "false"
     
-  - id: arm_home_fault
+  - id: arm_away_fault_old
+    type: bool
+    restore_value: no
+    initial_value: "true"
+    
+  - id: arm_stay_fault
     type: bool
     restore_value: no
     initial_value: "false"
     
-  - id: old_arm_away_fault_state
-    type: unsigned long long
+  - id: arm_stay_fault_old
+    type: bool
     restore_value: no
-    initial_value: "0xFFFFFFFFFFFFFFFF"
+    initial_value: "false"
+    
+  
     
  
 alarm_control_panel:
   - platform: template
     name: Alarm Panel # You will see this name as alarm_panel.Alarm_Panel in HomeAssistant
     id: acp1
-    requires_code_to_arm: false
     arming_away_time: 30s
     arming_home_time: 5s
     pending_time: 45s
@@ -98,10 +104,8 @@ alarm_control_panel:
     on_state:
       then: # Add things to do on state changes here.
         - lambda: !lambda |-
-            // ***** kpa1 specific *****
             id(cbus)->update_alarm_state(id(acp1)->get_state()); // Send state change to Kpa1 via cbus
             ESP_LOGI("AlarmPanel", "State change %s", alarm_control_panel_state_to_string(id(acp1)->get_state()));
-            // ***** end kpa1 specific *****
         
     on_triggered:
       then: # Add things to do when triggered here. e.g. sound siren, send a message etc.
@@ -190,10 +194,8 @@ interval:
     
     then:
       lambda: |-
-        bool s = false;
         unsigned long long new_fault_bits = 0ULL;
         
-        // For away case
         if(id(zone1).state == true) // Zone 1
           new_fault_bits |= (1ULL << 0);
           
@@ -241,59 +243,30 @@ interval:
           
         if(id(zone16).state == true) // Zone 16
           new_fault_bits |= (1ULL << 15);
-          
-        // Update the arm away fault state
-        id(arm_away_fault) = (new_fault_bits != 0ULL); 
         
-        // ***** kpa1 specific *****
+        // Update the arm away fault state
+        // Unused zones should be masked here by setting the appropriate zone bit to zero.
+        id(arm_away_fault) = id(cbus).check_for_zone_faults(new_fault_bits, 0xFFFF);
+        // Update arm stay fault state
+        // Unused and interior zones should be masked here by setting the appropriate zone bit to zero
+        id(arm_stay_fault) = id(cbus).check_for_zone_faults(new_fault_bits, 0xFFFF);
         // If we see a change in the state of the fault 
         // bits we let the keypads know here.
-        //
-        //
-        // Zone mask of unused inputs - set bits indicate zone is masked off
-        new_fault_bits &= ~0x0;
-        if(id(old_arm_away_fault_state) != new_fault_bits) {
-          id(old_arm_away_fault_state) = new_fault_bits;
-          id(cbus).update_system_ready(!(new_fault_bits > 0));
+        if(id(arm_away_fault) != id(arm_away_fault_old)){
+          ESP_LOGI("yaml", "Alarm away fault new: %d, old %d: ", id(arm_away_fault), id(arm_away_fault_old));
+          id(arm_away_fault_old) = id(arm_away_fault);
+          ESP_LOGI("yaml", "Alarm away fault inverted: %d", !id(arm_away_fault));
+          id(cbus).update_system_ready(!(id(arm_away_fault)));
         }
-        // ***** end kpa1 specific *****
-        
-        // For home case
-        s = false;
-        if(id(zone1).state == true) // Zone 1
-          s = true;
-        if(id(zone2).state == true) // Zone 2
-          s = true;
-        if(id(zone3).state == true) // Zone 3
-          s = true;
-        if(id(zone4).state == true) // Zone 4
-          s = true;
-        if(id(zone5).state == true) // Zone 5
-          s = true;
-        if(id(zone6).state == true) // Zone 6
-          s = true;
-        if(id(zone7).state == true) // Zone 7
-          s = true;
-        if(id(zone8).state == true) // Zone 8
-          s = true;
-        if(id(zone9).state == true) // Zone 9
-          s = true;
-        if(id(zone10).state == true) // Zone 10
-          s = true;
-        if(id(zone11).state == true) // Zone 11
-          s = true;
-        if(id(zone12).state == true) // Zone 12
-          s = true;
-        if(id(zone13).state == true) // Zone 13
-          s = true;
-        if(id(zone14).state == true) // Zone 14
-          s = true;
-        if(id(zone15).state == true) // Zone 15
-          s = true;
-        if(id(zone16).state == true) // Zone 16
-          s = true;
-        
-        id(arm_home_fault) = s;
+        // Uncomment for entry chime support
+        if(id(arm_stay_fault) != id(arm_stay_fault_old)){
+          ESP_LOGI("yaml", "Alarm stay fault: %d", id(arm_stay_fault));
+          id(arm_stay_fault_old) = id(arm_stay_fault);
+          id(cbus).update_system_entry_chime(id(arm_stay_fault));
+        }
+   
+
+     
    
  
         
@@ -311,8 +284,8 @@ interval:
 
   
 sensor:
-  # TMP102 sensor on board 
-  # Commented out 8/4/23 due to 50mS delay in component causing warnings to be generated.
+# TMP102 sensor on board 
+# Commented out 8/4/23 due to 50mS delay in component causing warnings to be generated.
 #  - platform: tmp102
 #    name: "Board Temperature"
 #    update_interval: 1s
@@ -544,24 +517,15 @@ binary_sensor:
       return id(arm_away_fault);
         
   - platform: template
-    name: "Arm Home Ready"
+    name: "Arm Stay Ready"
     lambda: |-
-      return id(arm_home_fault);
-     
-     
-  #
-  # ***** kpa1 specific *****
-  #
+      return id(arm_stay_fault);
   
   - platform: template
     name: "Keypad Comm. Problem"
     lambda: |-
       return id(cbus).get_keypad_comm_problem();
-  #
-  # ***** end kpa1 specific *****
-  #
 
-      
 switch:
   # Siren output
   - platform: gpio
@@ -594,9 +558,7 @@ output:
     pin: GPIO12
     id: rx_ena
 
-#
-# ***** kpa1 specific *****
-#
+
 kpa1:
   id: cbus # leave this as cbus as yaml above depends on it 
   uart_id: cbus_uart # Uart connected to the CBUS on the SP8
@@ -613,10 +575,7 @@ uart:
     rx_pin: GPIO5
     baud_rate: 19200
 
-#
-# ***** end kpa1 specific *****
-#
-  
+
 
 
 
