@@ -72,8 +72,14 @@ enum {
   CHIME_LOUD
 };
 enum { KEYPAD_RECORD_TYPE_RESERVED = 0, KEYPAD_RECORD_KEYS };
-enum { RTYPE_HELLO = 0, RTYPE_SEND_ERROR_COUNTERS, RTYPE_UPDATE_KEYPAD, RTYPE_DATA_FROM_KEYPAD, RTYPE_ECHO, RTYPE_CONN_KEYPADS  };
-
+enum {
+  RTYPE_HELLO = 0,
+  RTYPE_SEND_ERROR_COUNTERS,
+  RTYPE_UPDATE_KEYPAD,
+  RTYPE_DATA_FROM_KEYPAD,
+  RTYPE_ECHO,
+  RTYPE_CONN_KEYPADS
+};
 
 enum { CR_IDLE = 0, CR_BUSY };
 enum {
@@ -87,7 +93,7 @@ enum {
   PSF_RX_FLAGS = 0x0F
 };
 enum { RX_GOT_NOTHING = 0, RX_GOT_STX, RX_GOT_ETX, RX_GOT_DATA };
-enum { PRX_STATE_INIT = 0, PRX_STATE_IDLE, PRX_TX, PRX_TX_WAIT_ACK, PRX_HELLO_BACKOFF};
+enum { PRX_STATE_INIT = 0, PRX_STATE_IDLE, PRX_TX, PRX_TX_WAIT_ACK, PRX_HELLO_BACKOFF };
 enum { RF_STATE_IDLE = 0, RF_WAIT_DATA_ETX, RF_WAIT_CLEAR_FLAGS };
 enum { SRX_STATE_IDLE = 0, SRX_STATE_WAIT_SECOND };
 
@@ -107,7 +113,6 @@ typedef struct alignas(1) ErrorCountersLocal {
 /*
  * Structs used in communication with the kpa1
  */
- 
 
 typedef struct alignas(1) PanelPacketAckNak {
   uint8_t type;
@@ -258,8 +263,8 @@ class Kpa1 : public uart::UARTDevice, public Component {
   void readyLedHandler_();
   void lcdCopyString_(int line, int pos, const char *text);
   void remoteErrorCountersHandler_();
-  void processRemoteErrorCounters_(ErrorCountersRemote * prec);
-  void processKeypadInfo_(PanelKeypadInfo * prec);
+  void processRemoteErrorCounters_(ErrorCountersRemote *prec);
+  void processKeypadInfo_(PanelKeypadInfo *prec);
 
  public:
   Kpa1();
@@ -269,16 +274,14 @@ class Kpa1 : public uart::UARTDevice, public Component {
   void loop() override;
 
   void dump_config() override;
-  
- 
-  
+
   //
   // Set alarm control panel object
   // Called by esphome. Do not call
   //
 
   void set_acp(alarm_control_panel::AlarmControlPanel *acp_id);
-  
+
   //
   // Configures keypad silence entry state
   // Called by esphome, do not call
@@ -306,7 +309,7 @@ class Kpa1 : public uart::UARTDevice, public Component {
   //
 
   void update_alarm_state(uint8_t status);
-  
+
   //
   // Update system ready state
   // The yaml code should call this whenever the system ready state changes
@@ -314,16 +317,15 @@ class Kpa1 : public uart::UARTDevice, public Component {
   //
 
   void update_system_ready(bool ready);
-  
+
   //
   // Update system entry chime state
   // The yaml code should call this whenever the system ready state changes
   // for those sensors which are not internal, such as PIR's
   //
-  
+
   void update_system_entry_chime(bool chime);
-  
-  
+
   //
   //
   // Check for zone faults. Return true if any of the zone state bits
@@ -331,30 +333,27 @@ class Kpa1 : public uart::UARTDevice, public Component {
   //
   // To mask a zone, set the appropriate mask bit to zero in the zone_bits mask.
   //
-  
+
   bool check_for_zone_faults(uint64_t zone_state_bits, uint64_t zone_bits_mask);
-  
-  
-  
+
   //
   // Dumps all error counters to the log
   //
-  
+
   void dump_error_counters();
 
   //
   // Returns true if there's a communication problem with the keypads.
   //
-  
+
   bool get_keypad_comm_problem();
-  
+
   //
   // Return number of keypads connected
   //
-  
+
   uint8_t get_keypad_count();
-  
-  
+
   //
   // Return the keypad data as a c string in the following format:
   //
@@ -362,9 +361,8 @@ class Kpa1 : public uart::UARTDevice, public Component {
   //
   // Where: aa is the keypad address in decimal
   // and model is the keypad model number.
-  
-  const char *get_keypad_info();
 
+  const char *get_keypad_info();
 };
 
 }  // namespace kpa1

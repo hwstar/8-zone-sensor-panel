@@ -160,7 +160,7 @@ void Kpa1::makeTxDataPacket_(uint8_t *packet, uint8_t record_type, void *data) {
     case RTYPE_HELLO:
       clipped_data_len = 0;
       break;
-      
+
     case RTYPE_SEND_ERROR_COUNTERS:
       clipped_data_len = 0;
       break;
@@ -172,7 +172,7 @@ void Kpa1::makeTxDataPacket_(uint8_t *packet, uint8_t record_type, void *data) {
     case RTYPE_ECHO:
       clipped_data_len = sizeof(EchoCommand);
       break;
-      
+
     case RTYPE_CONN_KEYPADS:
       clipped_data_len = 0;
       break;
@@ -297,8 +297,8 @@ void Kpa1::rxFrame_() {
       if (res != RX_GOT_NOTHING) {
         if (res == RX_GOT_ETX) {  // End of frame
           if (validateRxPacket_(this->rxFrameIndex_, this->rxDataPacket_, &pt)) {
-            ESP_LL1(TAG, "Got frame type: %d, sequence number: %d, time (ms): %d", this->rxDataPacket_[0], this->rxDataPacket_[1],
-                    millis());
+            ESP_LL1(TAG, "Got frame type: %d, sequence number: %d, time (ms): %d", this->rxDataPacket_[0],
+                    this->rxDataPacket_[1], millis());
             // Got a packet, set the packet state flags accordingly
             PanelPacketAckNak *ppan = (PanelPacketAckNak *) this->rxDataPacket_;
             if (pt == PT_ACK) {
@@ -358,7 +358,7 @@ void Kpa1::txFrame_(void *tx_packet_in) {
   if (a->type == PT_DATA_SHORT) {
     tx_length = sizeof(PanelPacketHeader) + sizeof(uint16_t) +
                 h->payload_len;  // Get total packet length (3 bytes of header plus 2 bytes of CRC)
-    //logDebugHex_("TX packet contents:", tx_packet_in, tx_length);
+    // logDebugHex_("TX packet contents:", tx_packet_in, tx_length);
   } else if ((a->type == PT_ACK) || (a->type == PT_NAK)) {
     tx_length = sizeof(PanelPacketAckNak);
   } else {
@@ -450,7 +450,6 @@ bool Kpa1::kduDequeue_(KeypadDisplayUpdate *kdu) {
   return true;
 }
 
-
 /*
  *
  * Process keypad presses sent by keypad
@@ -492,7 +491,7 @@ void Kpa1::processKeypadKeyPresses_(PanelKeyboardEvent *pke) {
  * Process upload of the error counters from the kpa1
  */
 
-void Kpa1::processRemoteErrorCounters_(ErrorCountersRemote * prec) {
+void Kpa1::processRemoteErrorCounters_(ErrorCountersRemote *prec) {
   ESP_LL1(TAG, "Remote error counters received");
   memcpy(&ec_remote_, prec, sizeof(ErrorCountersRemote));
 }
@@ -501,12 +500,11 @@ void Kpa1::processRemoteErrorCounters_(ErrorCountersRemote * prec) {
  * Process upload of keypad info from the kpa1
  */
 
-void Kpa1::processKeypadInfo_(PanelKeypadInfo * prec) {
+void Kpa1::processKeypadInfo_(PanelKeypadInfo *prec) {
   memcpy(&ki_, prec, sizeof(PanelKeypadInfo));
   ESP_LL1(TAG, "Keypad information received");
-  //logDebugHex_("Keypad information:",&ki_, sizeof(PanelKeypadInfo));
+  // logDebugHex_("Keypad information:",&ki_, sizeof(PanelKeypadInfo));
 }
-
 
 /*
  * Process a data packet received from the kpa1. This will normally be
@@ -528,17 +526,19 @@ void Kpa1::processDataPacket_() {
       break;
 
     case RTYPE_SEND_ERROR_COUNTERS: {
-      ErrorCountersRemote *prec = (ErrorCountersRemote *) (this->rxDataPacket_ + sizeof(PanelPacketHeader) + sizeof(RecordTypeHeader));
+      ErrorCountersRemote *prec =
+          (ErrorCountersRemote *) (this->rxDataPacket_ + sizeof(PanelPacketHeader) + sizeof(RecordTypeHeader));
       processRemoteErrorCounters_(prec);
       break;
     }
-    
+
     case RTYPE_CONN_KEYPADS: {
-      PanelKeypadInfo *prec = (PanelKeypadInfo *) (this->rxDataPacket_ + sizeof(PanelPacketHeader) + sizeof(RecordTypeHeader));
+      PanelKeypadInfo *prec =
+          (PanelKeypadInfo *) (this->rxDataPacket_ + sizeof(PanelPacketHeader) + sizeof(RecordTypeHeader));
       processKeypadInfo_(prec);
       break;
     }
-      
+
     case RTYPE_DATA_FROM_KEYPAD: {
       // Determine what command we have and call the appropriate processing function
       PanelKeyboardEvent *pke =
@@ -577,9 +577,11 @@ void Kpa1::commStateMachineHandler_() {
       // Data case
       if (this->packetStateFlags_ & PSF_RX_DATA) {
         // We received a data packet
-        ESP_LL1(TAG, "Received data packet. Sequence number: %d, record type: %d", this->rxDataPacket_[1], this->rxDataPacket_[3]);
-        //logDebugHex_("Received bytes", this->rxDataPacket_, this->rxDataPacket_[2] + sizeof(PanelPacketHeader));  // DEBUG
-        // Handle received packet
+        ESP_LL1(TAG, "Received data packet. Sequence number: %d, record type: %d", this->rxDataPacket_[1],
+                this->rxDataPacket_[3]);
+        // logDebugHex_("Received bytes", this->rxDataPacket_, this->rxDataPacket_[2] + sizeof(PanelPacketHeader));  //
+        // DEBUG
+        //  Handle received packet
         processDataPacket_();
 
         // Make ACK Data packet
@@ -596,7 +598,7 @@ void Kpa1::commStateMachineHandler_() {
           this->kpa1Hello_ = false;
           // Send a request for the keypad info
           ESP_LL1(TAG, "Requesting connected keypads");
-          makeTxDataPacket_(this->txDataQueuedPacket_,RTYPE_CONN_KEYPADS);
+          makeTxDataPacket_(this->txDataQueuedPacket_, RTYPE_CONN_KEYPADS);
           queueTxPacket_(this->txDataQueuedPacket_);
         }
 
@@ -615,7 +617,7 @@ void Kpa1::commStateMachineHandler_() {
         } else {
           ESP_LL1(TAG, "TX packet sequence number %d successfully Ack'ed", pph->seq_num);
         }
-        
+
         // Allow reception and transmission.
         this->packetStateFlags_ &= ~(PSF_RX_FLAGS | PSF_TX_BUSY | PSF_INIT);
       } else if (this->packetStateFlags_ & PSF_TX_BUSY) {
@@ -625,7 +627,8 @@ void Kpa1::commStateMachineHandler_() {
             this->txRetries_++;
             // Log the type of error
             if (this->packetStateFlags_ & PSF_RX_NAK) {
-              ESP_LOGW(TAG, "TX NAK'ed, packet %d, at retry number: %d", this->txDataDequeuedPacket_[1], this->txRetries_);
+              ESP_LOGW(TAG, "TX NAK'ed, packet %d, at retry number: %d", this->txDataDequeuedPacket_[1],
+                       this->txRetries_);
             }
             // Retransmit the current packet
             this->packetState_ = PRX_TX;
@@ -672,8 +675,8 @@ void Kpa1::commStateMachineHandler_() {
       // If any bad packet
       else if (this->packetStateFlags_ & PSF_BAD_PACKET) {
         ESP_LL1(TAG, "Received bad packet, sending NAK");
-        //logDebugHex_("Bad bytes", this->rxDataPacket_, 16);
-        // Packet failed validation send NAK
+        // logDebugHex_("Bad bytes", this->rxDataPacket_, 16);
+        //  Packet failed validation send NAK
         makeTxAckNakPacket_(PT_NAK, 0);
         // Transmit it
         txFrame_(&this->txAckNakPacket_);
@@ -687,7 +690,8 @@ void Kpa1::commStateMachineHandler_() {
       }
 
       // Dequeue next packet if there is one and we are not busy
-      if ((this->helloReceived_) && ((this->packetStateFlags_ & PSF_TX_BUSY) == 0) && (deQueueTxPacket_(this->txDataDequeuedPacket_))) {
+      if ((this->helloReceived_) && ((this->packetStateFlags_ & PSF_TX_BUSY) == 0) &&
+          (deQueueTxPacket_(this->txDataDequeuedPacket_))) {
         this->packetStateFlags_ |= PSF_TX_BUSY;
         this->txRetries_ = 0;
         this->packetState_ = PRX_TX;
@@ -701,7 +705,7 @@ void Kpa1::commStateMachineHandler_() {
       txFrame_(this->txDataDequeuedPacket_);
       this->packetState_ = PRX_STATE_IDLE;
       break;
-      
+
     case PRX_HELLO_BACKOFF:
       // Wait backoff time for hello and try again
       if (TEST_TIMER(this->helloBackoffTimer_, HELLO_BACKOFF_TIME_MS)) {
@@ -709,7 +713,6 @@ void Kpa1::commStateMachineHandler_() {
         this->packetState_ = PRX_STATE_INIT;
       }
       break;
-      
 
     default:
       // Catch all
@@ -744,7 +747,7 @@ void Kpa1::backlightHandler_() {
       uint8_t chime_save = this->queuedKdu_.chime;
       // If the alarm is in the disarm state, temporarly override the chime type
       if (this->alarmState_ == esphome::alarm_control_panel::ACP_STATE_DISARMED) {
-        this->queuedKdu_.chime = CHIME_NONE; 
+        this->queuedKdu_.chime = CHIME_NONE;
       }
       // Send the backlight off message to the display
       kduEnqueue_(&this->queuedKdu_);
@@ -771,18 +774,17 @@ void Kpa1::keypadUpdateHandler_() {
 }
 
 /*
-* Periodically request the error counters from the kpa1
-*/
+ * Periodically request the error counters from the kpa1
+ */
 
 void Kpa1::remoteErrorCountersHandler_() {
-    if (TEST_TIMER(this->remoteErrorCounterTimer_, REMOTE_ERROR_COUNTER_UPDATE_TIME_MS)) {
-      this->remoteErrorCounterTimer_ = millis();
-      ESP_LL1(TAG, "Requesting remote error counter update");
-      makeTxDataPacket_(this->txDataQueuedPacket_, RTYPE_SEND_ERROR_COUNTERS);
-      queueTxPacket_(this->txDataQueuedPacket_);
-    }
+  if (TEST_TIMER(this->remoteErrorCounterTimer_, REMOTE_ERROR_COUNTER_UPDATE_TIME_MS)) {
+    this->remoteErrorCounterTimer_ = millis();
+    ESP_LL1(TAG, "Requesting remote error counter update");
+    makeTxDataPacket_(this->txDataQueuedPacket_, RTYPE_SEND_ERROR_COUNTERS);
+    queueTxPacket_(this->txDataQueuedPacket_);
+  }
 }
-
 
 /*
  * Ready led handler. Throttles the update of the ready LED.
@@ -801,7 +803,7 @@ void Kpa1::readyLedHandler_() {
         if (this->fastReadyLed_) {
           lcdCopyString_(1, 0, READY_TO_ARM_TEXT);
         } else {
-          chime_new = (this->fastChime_) ? CHIME_THREE_TIMES : CHIME_NONE; // Sensor opened
+          chime_new = (this->fastChime_) ? CHIME_THREE_TIMES : CHIME_NONE;  // Sensor opened
           lcdCopyString_(1, 0, NOT_READY_TEXT);
         }
       }
@@ -820,17 +822,16 @@ void Kpa1::readyLedHandler_() {
  */
 
 void Kpa1::receiveCodeDigitsHandler_() {
-  
   // If the panel didn't have a state change for a command within a certain time window, reset the code
   // and command receive flag as the command or code was likely invalid.
   if ((this->codeAndCommandReceived_ == true) && TEST_TIMER(this->validCommandTimer_, COMMAND_VALID_FLAG_TIME_MS)) {
     this->codeAndCommandReceived_ = false;
   }
-  
+
   switch (this->codeReceiverState_) {
     case CR_IDLE:
       if (this->keypadDigitCount_) {  // Something to append?
-        backlightOn_();         // Turn on backlight
+        backlightOn_();               // Turn on backlight
         this->codeDigitSourceAddress_ = this->keypadDigitSourceAddress_;
         this->codeDigitCount_ = 0;
         this->codeReceiverTimer_ = millis();
@@ -965,7 +966,7 @@ void Kpa1::setup() {
   this->commProblem_ = false;
   this->fastReadyLed_ = false;
   this->fastChime_ = false;
-  
+
   uint32_t now = millis();
   this->powerOnTimer_ = now;
   this->backLightTimer_ = now;
@@ -987,7 +988,7 @@ void Kpa1::setup() {
   this->queuedKdu_.len_line2 = MAX_KEYPAD_LINE;
   memset(this->queuedKdu_.line1, ' ', MAX_KEYPAD_LINE);
   memset(this->queuedKdu_.line2, ' ', MAX_KEYPAD_LINE);
-    
+
   // Clear local error counters
   memset(&this->ec_local_, 0, sizeof(ErrorCountersLocal));
   // Clear remote error counters
@@ -1020,26 +1021,22 @@ void Kpa1::dump_config() {
   ESP_LOGCONFIG(Tag, "Kpa1 connected: %s", (this->helloReceived_) ? "true" : "false");
 }
 
-
 void Kpa1::dump_error_counters() {
   ESP_LOGI(TAG, "************ Local Error Counters *************");
-  ESP_LOGI(TAG, "TX Soft Errors                 : %d",ec_local_.tx_soft_errors);
-  ESP_LOGI(TAG, "TX Hard Errors                 : %d",ec_local_.tx_hard_errors);
-  ESP_LOGI(TAG, "TX Buffer Pool Overflow Errors : %d",ec_local_.tx_buffer_pool_overflow_errors);
-  ESP_LOGI(TAG, "RX Bad Packets                 : %d",ec_local_.rx_bad_packets);
-  ESP_LOGI(TAG, "RX Frame Timeouts              : %d",ec_local_.rx_frame_timeouts);
+  ESP_LOGI(TAG, "TX Soft Errors                 : %d", ec_local_.tx_soft_errors);
+  ESP_LOGI(TAG, "TX Hard Errors                 : %d", ec_local_.tx_hard_errors);
+  ESP_LOGI(TAG, "TX Buffer Pool Overflow Errors : %d", ec_local_.tx_buffer_pool_overflow_errors);
+  ESP_LOGI(TAG, "RX Bad Packets                 : %d", ec_local_.rx_bad_packets);
+  ESP_LOGI(TAG, "RX Frame Timeouts              : %d", ec_local_.rx_frame_timeouts);
   ESP_LOGI(TAG, "************ Remote Error Counters *************");
-  ESP_LOGI(TAG, "TX Soft Errors                 : %d",ec_remote_.tx_soft_errors);
-  ESP_LOGI(TAG, "TX Hard Errors                 : %d",ec_remote_.tx_hard_errors);
-  ESP_LOGI(TAG, "TX Buffer Pool Overflow Errors : %d",ec_remote_.tx_buffer_pool_overflow_errors);
-  ESP_LOGI(TAG, "RX Bad Packets                 : %d",ec_remote_.rx_bad_packets);
-  ESP_LOGI(TAG, "RX Frame Timeouts              : %d",ec_remote_.rx_frame_timeouts);
-  ESP_LOGI(TAG, "ECP Parity Errors              : %d",ec_remote_.ecp_parity_errors);
-  ESP_LOGI(TAG, "ECP Checksum Errors            : %d",ec_remote_.ecp_checksum_errors);
+  ESP_LOGI(TAG, "TX Soft Errors                 : %d", ec_remote_.tx_soft_errors);
+  ESP_LOGI(TAG, "TX Hard Errors                 : %d", ec_remote_.tx_hard_errors);
+  ESP_LOGI(TAG, "TX Buffer Pool Overflow Errors : %d", ec_remote_.tx_buffer_pool_overflow_errors);
+  ESP_LOGI(TAG, "RX Bad Packets                 : %d", ec_remote_.rx_bad_packets);
+  ESP_LOGI(TAG, "RX Frame Timeouts              : %d", ec_remote_.rx_frame_timeouts);
+  ESP_LOGI(TAG, "ECP Parity Errors              : %d", ec_remote_.ecp_parity_errors);
+  ESP_LOGI(TAG, "ECP Checksum Errors            : %d", ec_remote_.ecp_checksum_errors);
 }
-
-
-
 
 /*
  * Set alarm control panel object
@@ -1050,7 +1047,6 @@ void Kpa1::set_acp(alarm_control_panel::AlarmControlPanel *acp_id) { this->acp_ 
 /*
  * Control keypad entry silent mode
  */
-
 
 void Kpa1::set_keypad_entry_silent(bool silent) { this->keypadEntrySilent_ = silent; }
 
@@ -1079,7 +1075,7 @@ void Kpa1::update_system_ready(bool ready) {
  */
 
 void Kpa1::update_system_entry_chime(bool chime) {
-  this->fastChime_ = chime; // Save copy for testing later
+  this->fastChime_ = chime;  // Save copy for testing later
 }
 
 /*
@@ -1090,24 +1086,19 @@ bool Kpa1::check_for_zone_faults(uint64_t zone_state_bits, uint64_t zone_bits_ma
   return (bool) zone_state_bits & zone_bits_mask;
 }
 
-
 /*
  * Return true if we can't communicate with the kpa1
  */
 
-bool Kpa1::get_keypad_comm_problem() {
-  return this->commProblem_;
-}
-
+bool Kpa1::get_keypad_comm_problem() { return this->commProblem_; }
 
 /*
  * Return list of kpa1 addresses
  */
-  
- 
+
 uint8_t Kpa1::get_keypad_count() {
   uint8_t i, count = 0;
-  for ( i = 0; i < KP_INFO_MAX_KEYPADS ; i++) {
+  for (i = 0; i < KP_INFO_MAX_KEYPADS; i++) {
     if (ki_.info[i].valid) {
       count++;
     }
@@ -1118,47 +1109,39 @@ uint8_t Kpa1::get_keypad_count() {
 
 /*
  * Return keypad model for a given address
- */  
-   
+ */
+
 const char *Kpa1::get_keypad_info() {
   const char *model;
   char elem[4 + KP_MODEL_LEN + 1];
-  static char info[KP_INFO_MAX_KEYPADS * (KP_MODEL_LEN  + 4) + 2];
-  
-  
+  static char info[KP_INFO_MAX_KEYPADS * (KP_MODEL_LEN + 4) + 2];
+
   info[0] = 0;
-  
-  for(int i = 0; i < KP_INFO_MAX_KEYPADS; i++) {
+
+  for (int i = 0; i < KP_INFO_MAX_KEYPADS; i++) {
     if (ki_.info[i].valid) {
       // Set model string
-      if ((ki_.info[i].model[3] == 0x04) && 
-      (ki_.info[i].model[4] == 0x04) &&
-      (ki_.info[i].model[5] == 0x04)) {
+      if ((ki_.info[i].model[3] == 0x04) && (ki_.info[i].model[4] == 0x04) && (ki_.info[i].model[5] == 0x04)) {
         model = "6160";
-      }
-      else if ((ki_.info[i].model[3] == 0x04) && 
-      (ki_.info[i].model[4] == 0x06) &&
-      (ki_.info[i].model[5] == 0x04)) {
+      } else if ((ki_.info[i].model[3] == 0x04) && (ki_.info[i].model[4] == 0x06) && (ki_.info[i].model[5] == 0x04)) {
         model = "6139";
-      }
-      else {
+      } else {
         model = "UNK";
       }
-      snprintf(elem, sizeof(elem), "%s@%02d,", model, 16 + i );
+      snprintf(elem, sizeof(elem), "%s@%02d,", model, 16 + i);
       elem[sizeof(elem) - 1] = 0;
-      //ESP_LL1(TAG, "Keypad elem: %s", elem);
+      // ESP_LL1(TAG, "Keypad elem: %s", elem);
       strcat(info, elem);
     }
   }
   // Delete extra comma
-  if (strlen(info)){
+  if (strlen(info)) {
     info[strlen(info) - 1] = 0;
   }
   // Return info string
   ESP_LOGI(TAG, "Keypad info: %s", info);
   return (const char *) info;
 }
-
 
 /*
  * This is called from YAML when the alarm panel state changes
@@ -1191,7 +1174,7 @@ void Kpa1::update_alarm_state(uint8_t status) {
     case esphome::alarm_control_panel::ACP_STATE_ARMED_AWAY:
       lcdCopyString_(0, 0, ARMED_AWAY_TEXT);
       lcdCopyString_(1, 0, "");  // Blank line
-       this->queuedKdu_.chime = CHIME_NONE;
+      this->queuedKdu_.chime = CHIME_NONE;
       this->queuedKdu_.armed = true;
       break;
 
@@ -1218,8 +1201,8 @@ void Kpa1::update_alarm_state(uint8_t status) {
 
     case esphome::alarm_control_panel::ACP_STATE_PENDING:
 
-      backlightOn_(); 
-  
+      backlightOn_();
+
       if (this->keypadEntrySilent_) {
         this->queuedKdu_.chime = CHIME_NONE;
       } else {
@@ -1230,8 +1213,8 @@ void Kpa1::update_alarm_state(uint8_t status) {
       break;
 
     case esphome::alarm_control_panel::ACP_STATE_ARMING:
-      if (this->codeAndCommandReceived_){
-        this->queuedKdu_.chime = CHIME_ONCE; // Acknowledge arming command
+      if (this->codeAndCommandReceived_) {
+        this->queuedKdu_.chime = CHIME_ONCE;  // Acknowledge arming command
         kduEnqueue_(&this->queuedKdu_);
         this->queuedKdu_.chime = CHIME_NONE;
       }
@@ -1263,7 +1246,7 @@ void Kpa1::update_alarm_state(uint8_t status) {
   // Queue to send to keypads
   kduEnqueue_(&this->queuedKdu_);
   // Reset chime once
-  if(this->queuedKdu_.chime == CHIME_ONCE) {
+  if (this->queuedKdu_.chime == CHIME_ONCE) {
     this->queuedKdu_.chime = CHIME_NONE;
     kduEnqueue_(&this->queuedKdu_);
   }
