@@ -781,13 +781,13 @@ void Kpa1::backlightHandler_() {
       // Save a copy of the chime type
       uint8_t chime_save = this->queuedKdu_.chime;
       // If the alarm is in the disarm state, temporarly override the chime type
-      if (this->alarmState_ == esphome::alarm_control_panel::ACP_STATE_DISARMED) {
-        this->queuedKdu_.chime = CHIME_NONE;
-      }
+      this->queuedKdu_.chime = CHIME_NONE;
       // Send the backlight off message to the display
       kduEnqueue_(&this->queuedKdu_);
+      
       // Restore the chime type
       this->queuedKdu_.chime = chime_save;
+      kduEnqueue_(&this->queuedKdu_);
     }
   }
 }
@@ -828,6 +828,15 @@ void Kpa1::remoteErrorCountersHandler_() {
 
 void Kpa1::readyLedHandler_() {
   uint8_t chime_new = CHIME_NONE, chime_save;
+  
+  // Don't update anything if ARMING, PENDING, or TRIGGERED
+  if(this->alarmState_ == esphome::alarm_control_panel::ACP_STATE_ARMING ||
+    this->alarmState_ == esphome::alarm_control_panel::ACP_STATE_PENDING ||
+    this->alarmState_ == esphome::alarm_control_panel::ACP_STATE_TRIGGERED) {
+    return;
+  }
+     
+  
   if (TEST_TIMER(this->readyLedTimer_, READY_LED_UPDATE_TIME_MS)) {
     if (this->fastReadyLed_ != this->queuedKdu_.ready) {
       this->readyLedTimer_ = millis();
@@ -847,6 +856,8 @@ void Kpa1::readyLedHandler_() {
       this->queuedKdu_.ready = this->fastReadyLed_;
       kduEnqueue_(&this->queuedKdu_);
       this->queuedKdu_.chime = chime_save;
+      kduEnqueue_(&this->queuedKdu_);
+      
     }
   }
 }
@@ -1252,6 +1263,7 @@ void Kpa1::update_alarm_state(uint8_t status) {
         this->queuedKdu_.chime = CHIME_ONCE;  // Acknowledge arming command
         kduEnqueue_(&this->queuedKdu_);
         this->queuedKdu_.chime = CHIME_NONE;
+        
       }
       if (this->keypadExitSilent_) {
         this->queuedKdu_.chime = CHIME_NONE;
