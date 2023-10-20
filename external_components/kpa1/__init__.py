@@ -4,6 +4,8 @@ from esphome.components import uart
 from esphome.components import alarm_control_panel
 from esphome.const import CONF_ID
 
+CODEOWNERS = "hwstar"
+ESP_PLATFORMS = "ESP32"
 CONF_ID_ACP = "acp_id"
 CONF_ENTRY_SILENT = "entry_silent"
 CONF_EXIT_SILENT = "exit_silent"
@@ -17,9 +19,9 @@ Kpa1 = kpa1_ns.class_('Kpa1', cg.Component, uart.UARTDevice)
 CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(Kpa1),
     cv.Required(CONF_ID_ACP): cv.use_id(alarm_control_panel.AlarmControlPanel),
-    cv.Required(CONF_ENTRY_SILENT): cv.boolean,
-    cv.Required(CONF_EXIT_SILENT): cv.boolean,
-    cv.Required(CONF_ALARM_SILENT): cv.boolean,
+    cv.Optional(CONF_ENTRY_SILENT, default=False): cv.boolean,
+    cv.Optional(CONF_EXIT_SILENT, default=False): cv.boolean,
+    cv.Optional(CONF_ALARM_SILENT, default=False): cv.boolean,
 }).extend(cv.COMPONENT_SCHEMA).extend(uart.UART_DEVICE_SCHEMA)
 
 async def to_code(config):
