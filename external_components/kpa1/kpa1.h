@@ -7,55 +7,42 @@
 #define TEST_TIMER(timer, duration) ((((uint32_t) millis()) - timer) > duration)
 #define NEXT_QUEUE_INDEX(prev, depth) ((prev + 1 >= depth) ? 0 : prev + 1)
 
-#define CODE_START_OVER_KEY '*'
-#define CODE_DIGITS_MAX 4
-#define MAX_KEYPAD_LINE 16
-#define MAX_KEYPAD_DATA_LENGTH 16
-#define RAW_PACKET_BUFFER_SIZE 64
-#define TX_DATA_PACKET_POOL_SIZE 8
-#define KDU_POOL_SIZE 8
-#define KP_MODEL_LEN 6
-#define KP_INFO_MAX_KEYPADS 8
-#define STUFF_CODE 0x00
-#define SOH 0x01
-#define STX 0x02
-#define ETX 0x03
-#define STUFFED_BYTE_THRESHOLD 0x04
-#define PT_ACK 0x00
-#define PT_NAK 0x01
-#define PT_DATA_SHORT 0x02
-#define CRC_INIT_VEC 0x55AA
-#define PANEL_MAX_RETRIES 5
-#define PACKET_TX_TIMEOUT_MS 2000
-#define RX_FRAME_TIMEOUT_MS 2000
-#define CODE_INTERDIGIT_TIMEOUT_MS 5000
-#define POWER_ON_WAIT_MS 10000
-#define BACKLIGHT_TIME_MS 60000
-#define KEYPAD_UPDATE_TIME 500
-#define READY_LED_UPDATE_TIME_MS 1000
-#define REMOTE_ERROR_COUNTER_UPDATE_TIME_MS 60000
-#define COMMAND_VALID_FLAG_TIME_MS 1000
-#define HELLO_BACKOFF_TIME_MS 30000
 
-// Customizable text messages
 
-#define NOT_READY_TEXT "Not Ready"
-#define READY_TO_ARM_TEXT "Ready to Arm"
-#define DISARMED_TEXT "Disarmed"
-#define ARMED_HOME_TEXT "Armed Stay"
-#define ARMED_AWAY_TEXT "Armed Away"
-#define ARMED_NIGHT_TEXT "Armed Night"
-#define ARMED_VACATION_TEXT "Armed Vacation"
-#define ARMED_CUSTOM_BYPASS_TEXT "Armed Cust. Byp."
-#define ALARM_PENDING_TEXT "Entry Delay"
-#define ENTER_CODE_NOW_TEXT "Enter Code Now"
-#define ALARM_ARMING_TEXT "Exit Delay"
-#define LEAVE_NOW_TEXT "Leave Now"
-#define DISARMING_TEXT "Disarming..."
-#define TRIGGERED_TEXT "*** ALARM ***"
 
 namespace esphome {
 namespace kpa1 {
+ 
+
+const char CODE_START_OVER_KEY = '*';
+const uint8_t CODE_DIGITS_MAX  = 4;
+const uint8_t  MAX_KEYPAD_LINE = 16;
+const uint8_t MAX_KEYPAD_DATA_LENGTH = 16;
+const uint8_t RAW_PACKET_BUFFER_SIZE = 64;
+const uint8_t TX_DATA_PACKET_POOL_SIZE = 8;
+const uint8_t KDU_POOL_SIZE = 8;
+const uint8_t KP_MODEL_LEN = 6;
+const uint8_t KP_INFO_MAX_KEYPADS = 8;
+const uint8_t STUFF_CODE = 0x00;
+const uint8_t SOH = 0x01;
+const uint8_t STX = 0x02;
+const uint8_t ETX = 0x03;
+const uint8_t STUFFED_BYTE_THRESHOLD = 0x04;
+const uint8_t PT_ACK = 0x00;
+const uint8_t PT_NAK = 0x01;
+const uint8_t PT_DATA_SHORT = 0x02;
+const uint16_t CRC_INIT_VEC = 0x55AA;
+const uint8_t PANEL_MAX_RETRIES = 5;
+const uint32_t PACKET_TX_TIMEOUT_MS = 2000;
+const uint32_t RX_FRAME_TIMEOUT_MS = 2000;
+const uint32_t CODE_INTERDIGIT_TIMEOUT_MS = 5000;
+const uint32_t POWER_ON_WAIT_MS = 10000;
+const uint32_t BACKLIGHT_TIME_MS = 60000;
+const uint32_t KEYPAD_UPDATE_TIME = 500;
+const uint32_t READY_LED_UPDATE_TIME_MS = 1000;
+const uint32_t REMOTE_ERROR_COUNTER_UPDATE_TIME_MS = 60000;
+const uint32_t COMMAND_VALID_FLAG_TIME_MS = 1000;
+const uint32_t HELLO_BACKOFF_TIME_MS = 30000;
 
 /*
  * Enums used in communication with the panel
