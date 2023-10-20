@@ -176,6 +176,10 @@ void Kpa1::makeTxDataPacket_(uint8_t *packet, uint8_t record_type, void *data) {
     case RTYPE_CONN_KEYPADS:
       clipped_data_len = 0;
       break;
+      
+    case RTYPE_VERSION:
+      clipped_data_len = 0;
+      break;
 
     default:
       return;  // Don't know what the record type is
@@ -548,6 +552,14 @@ void Kpa1::processDataPacket_() {
       }
       break;
     }
+    
+    case RTYPE_VERSION: {
+      VersionInfo *prec = (VersionInfo *) (this->rxDataPacket_ + sizeof(PanelPacketHeader) + sizeof(RecordTypeHeader));
+      memcpy(&this->vi_, prec, sizeof(VersionInfo));
+      ESP_LOGI(TAG, "KPA1 device id: %02d, major version: %02d, mid version: %02d, minor version: %02d",
+      vi_.device_id, vi_.version_major, vi_.version_mid, vi_.version_minor);
+      break;
+    }
 
     default:
       break;
@@ -596,6 +608,10 @@ void Kpa1::commStateMachineHandler_() {
           ESP_LL1(TAG, "Unlocking the TX queue");
           this->helloReceived_ = this->kpa1Hello_;
           this->kpa1Hello_ = false;
+          // Send a request for the version info
+          ESP_LL1(TAG, "Requesting version information");
+          makeTxDataPacket_(this->txDataQueuedPacket_, RTYPE_VERSION);
+          queueTxPacket_(this->txDataQueuedPacket_);
           // Send a request for the keypad info
           ESP_LL1(TAG, "Requesting connected keypads");
           makeTxDataPacket_(this->txDataQueuedPacket_, RTYPE_CONN_KEYPADS);

@@ -78,7 +78,8 @@ enum {
   RTYPE_UPDATE_KEYPAD,
   RTYPE_DATA_FROM_KEYPAD,
   RTYPE_ECHO,
-  RTYPE_CONN_KEYPADS
+  RTYPE_CONN_KEYPADS,
+  RTYPE_VERSION,
 };
 
 enum { CR_IDLE = 0, CR_BUSY };
@@ -113,6 +114,12 @@ typedef struct alignas(1) ErrorCountersLocal {
 /*
  * Structs used in communication with the kpa1
  */
+typedef struct alignas(1) VersionInfo {
+  uint8_t device_id;
+  uint8_t version_major;
+  uint8_t version_mid;
+  uint8_t version_minor;
+} VersionInfo;
 
 typedef struct alignas(1) PanelPacketAckNak {
   uint8_t type;
@@ -184,6 +191,7 @@ class Kpa1 : public uart::UARTDevice, public Component {
   ErrorCountersLocal ec_local_;
   ErrorCountersRemote ec_remote_;
   PanelKeypadInfo ki_;
+  VersionInfo vi_;
   PanelPacketAckNak txAckNakPacket_;
   KeypadDisplayUpdate queuedKdu_;
   KeypadDisplayUpdate dequeuedKdu_;
