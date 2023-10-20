@@ -1,13 +1,32 @@
 #include "kpa1.h"
 #include "esphome/core/log.h"
 
+
 #define ESP_LL1 ESP_LOGD
 #define ESP_LL2 ESP_LOGD
 
 namespace esphome {
 namespace kpa1 {
-
+  
 static const char *TAG = "kpa1";
+
+// Customizable text messages
+
+const char *NOT_READY_TEXT = "Not Ready";
+const char *READY_TO_ARM_TEXT = "Ready to Arm";
+const char *DISARMED_TEXT = "Disarmed";
+const char *ARMED_HOME_TEXT ="Armed Stay";
+const char *ARMED_AWAY_TEXT = "Armed Away";
+const char *ARMED_NIGHT_TEXT = "Armed Night";
+const char *ARMED_VACATION_TEXT = "Armed Vacation";
+const char *ARMED_CUSTOM_BYPASS_TEXT = "Armed Cust. Byp.";
+const char *ALARM_PENDING_TEXT = "Entry Delay";
+const char *ENTER_CODE_NOW_TEXT = "Enter Code Now";
+const char *ALARM_ARMING_TEXT = "Exit Delay";
+const char *LEAVE_NOW_TEXT = "Leave Now";
+const char *DISARMING_TEXT = "Disarming...";
+const char *TRIGGERED_TEXT = "*** ALARM ***";
+
 
 Kpa1::Kpa1() {
   // These are in the constructor, because the setters for them are called
