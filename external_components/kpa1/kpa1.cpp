@@ -1006,7 +1006,7 @@ bool Kpa1::getAssistanceKey_(uint8_t key) {
   if(key >= MAX_ASSISTANCE_KEY) {
     return false;
   }
-  if( this->assistanceKey_[key] == 0) {
+  if( this->assistanceKey_[key] == false) {
     return false;
   }
   bool ak = this->assistanceKey_[key];
@@ -1071,7 +1071,7 @@ void Kpa1::setup() {
   // Clear the keypad info
   memset(&this->ki_, 0, sizeof(PanelKeypadInfo));
   // Clear assistance keys
-  memset(this->assistanceKey_, 0, MAX_ASSISTANCE_KEY);
+  memset(this->assistanceKey_, false, MAX_ASSISTANCE_KEY);
 }
 
 /*
