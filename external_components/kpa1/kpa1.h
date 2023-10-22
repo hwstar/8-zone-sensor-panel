@@ -16,8 +16,9 @@ namespace kpa1 {
 
 const char CODE_START_OVER_KEY = '*';
 const uint8_t CODE_DIGITS_MAX  = 4;
-const uint8_t  MAX_KEYPAD_LINE = 16;
+const uint8_t MAX_KEYPAD_LINE = 16;
 const uint8_t MAX_KEYPAD_DATA_LENGTH = 16;
+const uint8_t MAX_ASSISTANCE_KEY = 4;
 const uint8_t RAW_PACKET_BUFFER_SIZE = 64;
 const uint8_t TX_DATA_PACKET_POOL_SIZE = 8;
 const uint8_t KDU_POOL_SIZE = 8;
@@ -183,6 +184,7 @@ class Kpa1 : public uart::UARTDevice, public Component {
   KeypadDisplayUpdate queuedKdu_;
   KeypadDisplayUpdate dequeuedKdu_;
   KeypadDisplayUpdate kduPool_[KDU_POOL_SIZE];
+  bool assistanceKey_[MAX_ASSISTANCE_KEY];
   bool keypadBacklightState_;
   bool kpa1Hello_;
   bool helloReceived_;
@@ -260,6 +262,7 @@ class Kpa1 : public uart::UARTDevice, public Component {
   void remoteErrorCountersHandler_();
   void processRemoteErrorCounters_(ErrorCountersRemote *prec);
   void processKeypadInfo_(PanelKeypadInfo *prec);
+  bool getAssistanceKey_(uint8_t key);
 
  public:
   Kpa1();
@@ -358,6 +361,34 @@ class Kpa1 : public uart::UARTDevice, public Component {
   // and model is the keypad model number.
 
   const char *get_keypad_info();
+  
+  
+  //
+  // Return the assistance key value. Returns true if one was pressed.
+  // Return false if no assistance key was pressed.
+  // After a true is returned, the assistance key value returned will
+  // be zero on subsequent calls until a new key is pressed.
+  //
+  
+  bool get_assistance_key_a(); // Topmost
+  
+  bool get_assistance_key_b();
+  
+  bool get_assistance_key_c();
+  
+  bool get_assistance_key_d(); // Bottom
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 };
 
 }  // namespace kpa1

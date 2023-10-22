@@ -2,7 +2,7 @@
 #include "esphome/core/log.h"
 
 
-#define ESP_LL1 ESP_LOGD
+#define ESP_LL1 ESP_LOGI
 #define ESP_LL2 ESP_LOGD
 
 namespace esphome {
@@ -914,6 +914,18 @@ void Kpa1::receiveCodeDigitsHandler_() {
               ESP_LL1(TAG, "User pressed code start over key, resetting code receiver");
               return;
             }
+            // Handle assistance key
+            if ((keypadDigitsReceived_[i] == 'A' ) ||( keypadDigitsReceived_[i] == 'B') || 
+                (keypadDigitsReceived_[i] == 'C') || (keypadDigitsReceived_[i] == 'D')) {
+              uint8_t index = keypadDigitsReceived_[i] - 'A';
+              this->assistanceKey_[index] = true;
+              // Reset code digit receiver
+              this->keypadDigitCount_ = 0;
+              this->codeReceiverState_ = CR_IDLE;
+              ESP_LL1(TAG, "User pressed an assistance key, resetting code receiver");
+              return;
+            }
+            
             // Add key to code digit buffer
             this->codeInProcess_[this->codeDigitCount_ + i] = keypadDigitsReceived_[i];
           }
@@ -987,6 +999,22 @@ void Kpa1::receiveCodeDigitsHandler_() {
 }
 
 /*
+ * Return value of a specific assistance key
+ */
+
+bool Kpa1::getAssistanceKey_(uint8_t key) {
+  if(key >= MAX_ASSISTANCE_KEY) {
+    return false;
+  }
+  if( this->assistanceKey_[key] == 0) {
+    return false;
+  }
+  bool ak = this->assistanceKey_[key];
+  this->assistanceKey_[key] = false;
+  return ak;
+}
+
+/*
  * Setup function
  */
 
@@ -1012,6 +1040,7 @@ void Kpa1::setup() {
   this->commProblem_ = false;
   this->fastReadyLed_ = false;
   this->fastChime_ = false;
+ 
 
   uint32_t now = millis();
   this->powerOnTimer_ = now;
@@ -1041,6 +1070,8 @@ void Kpa1::setup() {
   memset(&this->ec_remote_, 0, sizeof(ErrorCountersRemote));
   // Clear the keypad info
   memset(&this->ki_, 0, sizeof(PanelKeypadInfo));
+  // Clear assistance keys
+  memset(this->assistanceKey_, 0, MAX_ASSISTANCE_KEY);
 }
 
 /*
@@ -1137,6 +1168,39 @@ bool Kpa1::check_for_zone_faults(uint64_t zone_state_bits, uint64_t zone_bits_ma
  */
 
 bool Kpa1::get_keypad_comm_problem() { return this->commProblem_; }
+
+
+/*
+ * Return the value of the assistance key A
+ */
+
+
+bool Kpa1::get_assistance_key_a() {
+  return getAssistanceKey_(0);
+}
+
+/*
+ * Return the value of the assistance key B
+ */
+
+bool Kpa1::get_assistance_key_b() {
+  return getAssistanceKey_(1);
+}
+
+/*
+ * Return the value of the assistance key C
+ */
+
+bool Kpa1::get_assistance_key_c() {
+  return getAssistanceKey_(2);
+}
+
+/*
+ * Return the value of the assistance key D
+ */
+bool Kpa1::get_assistance_key_d() {
+  return getAssistanceKey_(3);
+}
 
 /*
  * Return list of kpa1 addresses
