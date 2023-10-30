@@ -2,7 +2,7 @@
 #include "esphome/core/log.h"
 
 
-#define ESP_LL1 ESP_LOGI
+#define ESP_LL1 ESP_LOGD
 #define ESP_LL2 ESP_LOGD
 
 namespace esphome {
@@ -1095,7 +1095,7 @@ void Kpa1::loop() {
 
 void Kpa1::dump_config() {
   ESP_LOGCONFIG(TAG, "KPA1:");
-  ESP_LOGCONFIG(Tag, "Kpa1 connected: %s", (this->helloReceived_) ? "true" : "false");
+  ESP_LOGCONFIG(TAG, "Kpa1 connected: %s", (this->helloReceived_) ? "true" : "false");
 }
 
 void Kpa1::dump_error_counters() {

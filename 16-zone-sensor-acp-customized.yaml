@@ -23,9 +23,10 @@ esphome:
           // Transmit state to keypads on power up
           id(cbus).update_alarm_state((uint8_t) status);
           
-      - delay: 30s # Test only
+      - delay: 30s # Test only - dump config
       
       - lambda: |-
+          id(acp1).dump_config();
           id(cbus).get_keypad_count();
           id(cbus).get_keypad_info();
       
@@ -45,8 +46,8 @@ external_components:
   - source:
       type: local
       path: external_components
-    components: ["kpa1","alarm_control_panel","template/alarm_control_panel] 
-
+    components: ["kpa1","alarm_control_panel", "template"] 
+  
  
 globals:
   - id: arm_away_fault
@@ -82,13 +83,16 @@ alarm_control_panel:
     arming_away_time: 30s
     arming_home_time: 5s
     pending_time: 45s
-    trigger_time: 5min
+    trigger_time: 1min
     restore_mode: RESTORE_DEFAULT_DISARMED # Fail Secure
     
     binary_sensors:
       - input: zone1  # Label your zones here as comments
+        sensor_type: delayed
       - input: zone2  # 
+        sensor_type: instant
       - input: zone3  # 
+        sensor_type: interior_follower
       - input: zone4  # 
       - input: zone5  #
       - input: zone6  # 
@@ -112,11 +116,13 @@ alarm_control_panel:
       then: # Add things to do when triggered here. e.g. sound siren, send a message etc.
         - lambda: !lambda |-
             ESP_LOGI("AlarmPanel", "Alarm Triggered!");
+            id(siren).turn_on();
             
     on_cleared:
       then: # Add things to do when the alarm is canceled here.
         - lambda: !lambda |-
             ESP_LOGI("AlarmPanel", "Alarm Cleared!");
+            id(siren).turn_off();
 
 
 #
