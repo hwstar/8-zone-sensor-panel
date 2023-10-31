@@ -46,7 +46,7 @@ external_components:
   - source:
       type: local
       path: external_components
-    components: ["kpa1","alarm_control_panel", "template"] 
+    components: ["kpa1", "alarm_control_panel", "template"] 
   
  
 globals:
@@ -93,7 +93,7 @@ alarm_control_panel:
         sensor_type: instant
       - input: zone3  # 
         sensor_type: interior_follower
-      - input: zone4  # 
+      - input: zone4  #
       - input: zone5  #
       - input: zone6  # 
       - input: zone7  # 
@@ -187,9 +187,11 @@ i2c:
 pca9554:
   - id: pca9554_zones_1_8
     address: 0x38
+
     
   - id: pca9554_zones_9_16
     address: 0x39
+  
   
 interval:
   - interval: 100ms

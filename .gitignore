@@ -1,4 +1,5 @@
 __pycache__/
+*.zip
 secrets.yaml
 .esphome/
 16-zone-sensor-kpa1-ec.yaml
@@ -14,6 +15,8 @@ external_components/template/sensor/
 external_components/template/switch/
 external_components/template/text/
 external_components/template/text_sensor/
+external_components/pca9554/
+
 
 
 

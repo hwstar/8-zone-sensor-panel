@@ -58,6 +58,19 @@ def validate_config(config):
         )
     return config
 
+#
+# Validate sensor type
+#
+
+def validate_sensors(config):
+  for sensor in config["binary_sensors"]:
+    if sensor["sensor_type"] not in SensorTypes:
+      valid_sensor_types = ', '.join(SensorTypes)
+      raise cv.Invalid(
+        f"Invalid sensor type: \"{sensor['sensor_type']}\". Must be one of: {valid_sensor_types}"
+      )
+  return config
+
 
 TEMPLATE_ALARM_CONTROL_PANEL_BINARY_SENSOR_SCHEMA = cv.maybe_simple_value(
     {
@@ -99,6 +112,7 @@ TEMPLATE_ALARM_CONTROL_PANEL_SCHEMA = (
 CONFIG_SCHEMA = cv.All(
     TEMPLATE_ALARM_CONTROL_PANEL_SCHEMA,
     validate_config,
+    validate_sensors,
 )
 
 
