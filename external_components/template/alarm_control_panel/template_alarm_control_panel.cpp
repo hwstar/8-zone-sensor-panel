@@ -129,6 +129,7 @@ void TemplateAlarmControlPanel::loop() {
       }
       // If sensor type is of type instant
       if(sensor_info.second.type == ALARM_SENSOR_TYPE_INSTANT) {
+        
         instant_sensor_not_ready = true;
         break;
       }
@@ -149,6 +150,9 @@ void TemplateAlarmControlPanel::loop() {
       }
     }
   }
+   // Update all sensors not ready flag
+  this->sensors_ready_ = ((instant_sensor_not_ready == false) && (delayed_sensor_not_ready == false));
+  
 #endif
   if (this->is_state_armed(future_state) && (delayed_sensor_not_ready || instant_sensor_not_ready)) {
     // Instant sensors
@@ -190,6 +194,7 @@ uint32_t TemplateAlarmControlPanel::get_supported_features() const {
 }
 
 bool TemplateAlarmControlPanel::get_requires_code() const { return !this->codes_.empty(); }
+
 
 void TemplateAlarmControlPanel::arm_(optional<std::string> code, alarm_control_panel::AlarmControlPanelState state,
                                      uint32_t delay) {

@@ -50,6 +50,7 @@ class TemplateAlarmControlPanel : public alarm_control_panel::AlarmControlPanel,
   uint32_t get_supported_features() const override;
   bool get_requires_code() const override;
   bool get_requires_code_to_arm() const override { return this->requires_code_to_arm_; }
+  bool get_all_sensors_ready() { return this->sensors_ready_; };
   void set_restore_mode(TemplateAlarmControlPanelRestoreMode restore_mode) { this->restore_mode_ = restore_mode; }
 
 #ifdef USE_BINARY_SENSOR
@@ -132,6 +133,7 @@ class TemplateAlarmControlPanel : public alarm_control_panel::AlarmControlPanel,
   bool requires_code_to_arm_ = false;
   bool supports_arm_home_ = false;
   bool supports_arm_night_ = false;
+  bool sensors_ready_ = false;
   // check if the code is valid
   bool is_code_valid_(optional<std::string> code);
 

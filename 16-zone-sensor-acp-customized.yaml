@@ -46,33 +46,18 @@ external_components:
   - source:
       type: local
       path: external_components
-    components: ["kpa1", "alarm_control_panel", "template"] 
+    components: ["pca9554", "kpa1", "alarm_control_panel", "template"] 
   
  
 globals:
-  - id: arm_away_fault
-    type: bool
-    restore_value: no
-    initial_value: "false"
-    
-  - id: arm_away_fault_old
+  
+  - id: all_sensors_ready_old
     type: bool
     restore_value: no
     initial_value: "true"
     
-  - id: arm_stay_fault
-    type: bool
-    restore_value: no
-    initial_value: "false"
     
-  - id: arm_stay_fault_old
-    type: bool
-    restore_value: no
-    initial_value: "false"
-    
-  
-    
- 
+
 alarm_control_panel:
   - platform: template
     name: Alarm Panel # You will see this name as alarm_panel.Alarm_Panel in HomeAssistant
@@ -203,75 +188,18 @@ interval:
     
     then:
       lambda: |-
-        unsigned long long new_fault_bits = 0ULL;
-        
-        if(id(zone1).state == true) // Zone 1
-          new_fault_bits |= (1ULL << 0);
-          
-        if(id(zone2).state == true) // Zone 2
-          new_fault_bits |= (1ULL << 1);
-        
-        if(id(zone3).state == true) // Zone 3
-          new_fault_bits |= (1ULL << 2);
-          
-        if(id(zone4).state == true) // Zone 4
-          new_fault_bits |= (1ULL << 3);
-          
-        if(id(zone5).state == true) // Zone 5
-          new_fault_bits |= (1ULL << 4);
-          
-        if(id(zone6).state == true) // Zone 6
-          new_fault_bits |= (1ULL << 5);
-          
-        if(id(zone7).state == true) // Zone 7
-          new_fault_bits |= (1ULL << 6);
-          
-        if(id(zone8).state == true) // Zone 8
-          new_fault_bits |= (1ULL << 7);
-          
-        if(id(zone9).state == true) // Zone 9
-          new_fault_bits |= (1ULL << 8);
-          
-        if(id(zone10).state == true) // Zone 10
-          new_fault_bits |= (1ULL << 9);
-          
-        if(id(zone11).state == true) // Zone 11
-          new_fault_bits |= (1ULL << 10);
-          
-        if(id(zone12).state == true) // Zone 12
-          new_fault_bits |= (1ULL << 11);
-          
-        if(id(zone13).state == true) // Zone 13
-          new_fault_bits |= (1ULL << 12);
-          
-        if(id(zone14).state == true) // Zone 14
-          new_fault_bits |= (1ULL << 13);
-          
-        if(id(zone15).state == true) // Zone 15
-          new_fault_bits |= (1ULL << 14);
-          
-        if(id(zone16).state == true) // Zone 16
-          new_fault_bits |= (1ULL << 15);
-        
-        // Update the arm away fault state
-        // Unused zones should be masked here by setting the appropriate zone bit to zero.
-        id(arm_away_fault) = id(cbus).check_for_zone_faults(new_fault_bits, 0xFFFF);
-        // Update arm stay fault state
-        // Unused and interior zones should be masked here by setting the appropriate zone bit to zero
-        id(arm_stay_fault) = id(cbus).check_for_zone_faults(new_fault_bits, 0xFFFF);
-        // If we see a change in the state of the fault 
-        // bits we let the keypads know here.
-        if(id(arm_away_fault) != id(arm_away_fault_old)){
-          ESP_LOGI("yaml", "Alarm away fault new: %d, old %d: ", id(arm_away_fault), id(arm_away_fault_old));
-          id(arm_away_fault_old) = id(arm_away_fault);
-          id(cbus).update_system_ready(!(id(arm_away_fault)));
+        bool all_sensors_ready = id(acp1).get_all_sensors_ready();
+        if(all_sensors_ready != id(all_sensors_ready_old)){
+          ESP_LOGI("yaml", "All Sensors Ready new: %d, old %d: ", all_sensors_ready, id(all_sensors_ready_old));
+          id(all_sensors_ready_old) = all_sensors_ready;
+          id(cbus).update_system_ready(all_sensors_ready);
         }
         // Uncomment for entry chime support
-        if(id(arm_stay_fault) != id(arm_stay_fault_old)){
-          ESP_LOGI("yaml", "Alarm stay fault: %d", id(arm_stay_fault));
-          id(arm_stay_fault_old) = id(arm_stay_fault);
-          id(cbus).update_system_entry_chime(id(arm_stay_fault));
-        }
+        //if(id(arm_stay_fault) != id(arm_stay_fault_old)){
+        //  ESP_LOGI("yaml", "Alarm stay fault: %d", id(arm_stay_fault));
+        //  id(arm_stay_fault_old) = id(arm_stay_fault);
+        //  id(cbus).update_system_entry_chime(id(arm_stay_fault));
+        //}
  
      
    
@@ -515,19 +443,13 @@ binary_sensor:
       inverted: true
   
   #
-  # Template binary sensors for arm home and away faults
+  # Template binary sensors
   #
   
   - platform: template
-    name: "Arm Away Ready"
+    name: "All Sensors Ready"
     lambda: |-
-      return id(arm_away_fault);
-        
-  - platform: template
-    name: "Arm Stay Ready"
-    lambda: |-
-      return id(arm_stay_fault);
-     
+      return id(all_sensors_ready_old);
   
   - platform: template
     name: "Keypad Comm. Problem"
