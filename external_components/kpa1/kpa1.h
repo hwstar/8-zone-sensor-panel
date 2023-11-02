@@ -44,6 +44,7 @@ const uint32_t READY_LED_UPDATE_TIME_MS = 1000;
 const uint32_t REMOTE_ERROR_COUNTER_UPDATE_TIME_MS = 60000;
 const uint32_t COMMAND_VALID_FLAG_TIME_MS = 1000;
 const uint32_t HELLO_BACKOFF_TIME_MS = 30000;
+const uint32_t CHIME_UPDATE_TIME_MS = 5000;
 
 /*
  * Enums used in communication with the panel
@@ -189,7 +190,6 @@ class Kpa1 : public uart::UARTDevice, public Component {
   bool kpa1Hello_;
   bool helloReceived_;
   bool fastReadyLed_;
-  bool fastChime_;
   bool keypadEntrySilent_;
   bool keypadExitSilent_;
   bool keypadAlarmSilent_;
@@ -233,6 +233,7 @@ class Kpa1 : public uart::UARTDevice, public Component {
   uint32_t remoteErrorCounterTimer_;
   uint32_t validCommandTimer_;
   uint32_t helloBackoffTimer_;
+  uint32_t chimeTimer_;
 
   void logDebugHex_(const char *desc, void *p, uint32_t length);
   uint16_t crc16_(const uint8_t *data, uint16_t len, uint16_t crc, uint16_t poly = 0x1021, bool refin = false,
@@ -317,12 +318,11 @@ class Kpa1 : public uart::UARTDevice, public Component {
   void update_system_ready(bool ready);
 
   //
-  // Update system entry chime state
-  // The yaml code should call this whenever the system ready state changes
-  // for those sensors which are not internal, such as PIR's
+  // Send entry chime 
+  // The yaml code should call this whenever a chime zone goes from closed to open
   //
 
-  void update_system_entry_chime(bool chime);
+  void send_entry_chime();
 
   //
   //

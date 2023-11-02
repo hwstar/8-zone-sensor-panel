@@ -62,10 +62,18 @@ class DisarmedTrigger : public Trigger<> {
   }
 };
 
+
 class ClearedTrigger : public Trigger<> {
  public:
   explicit ClearedTrigger(AlarmControlPanel *alarm_control_panel) {
     alarm_control_panel->add_on_cleared_callback([this]() { this->trigger(); });
+  }
+};
+
+class ChimeTrigger : public Trigger<> {
+ public:
+  explicit ChimeTrigger(AlarmControlPanel *alarm_control_panel) {
+    alarm_control_panel->add_on_chime_callback([this]() { this->trigger(); });
   }
 };
 

@@ -46,7 +46,7 @@ external_components:
   - source:
       type: local
       path: external_components
-    components: ["pca9554", "kpa1", "alarm_control_panel", "template"] 
+    components: ["kpa1", "alarm_control_panel", "template"] 
   
  
 globals:
@@ -74,6 +74,7 @@ alarm_control_panel:
     binary_sensors:
       - input: zone1  # Label your zones here as comments
         sensor_type: delayed
+        chime: true
       - input: zone2  # 
         sensor_type: instant
       - input: zone3  # 
@@ -108,6 +109,15 @@ alarm_control_panel:
         - lambda: !lambda |-
             ESP_LOGI("AlarmPanel", "Alarm Cleared!");
             id(siren).turn_off();
+            
+    on_chime:
+      then: # Add things to do when a chime zone is opened.
+        - lambda: !lambda |-
+            ESP_LOGI("AlarmPanel", "Chime Yaml");
+            id(cbus).send_entry_chime();
+  
+ 
+      
 
 
 #
@@ -194,13 +204,7 @@ interval:
           id(all_sensors_ready_old) = all_sensors_ready;
           id(cbus).update_system_ready(all_sensors_ready);
         }
-        // Uncomment for entry chime support
-        //if(id(arm_stay_fault) != id(arm_stay_fault_old)){
-        //  ESP_LOGI("yaml", "Alarm stay fault: %d", id(arm_stay_fault));
-        //  id(arm_stay_fault_old) = id(arm_stay_fault);
-        //  id(cbus).update_system_entry_chime(id(arm_stay_fault));
-        //}
- 
+  
      
    
  
@@ -495,9 +499,9 @@ kpa1:
   uart_id: cbus_uart # Uart connected to the CBUS on the SP8
   acp_id: acp1  # Alarm control panel object
   # Silence settings (true/false)
-  entry_silent: true # turns off the keypad buzzer during entry delay
-  exit_silent: true # turns off the keypad buzzer during exit delay
-  alarm_silent: true # turns off the keypad buzzer when the alarm is triggered
+  entry_silent: false # turns off the keypad buzzer during entry delay
+  exit_silent: false # turns off the keypad buzzer during exit delay
+  alarm_silent: false # turns off the keypad buzzer when the alarm is triggered
 
 uart:
   # Uart for CBUS Honeywell/Residio keypad adapter (kpa1)

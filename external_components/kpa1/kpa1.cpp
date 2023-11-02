@@ -611,7 +611,7 @@ void Kpa1::commStateMachineHandler_() {
         ESP_LL1(TAG, "Received data packet. Sequence number: %d, record type: %d", this->rxDataPacket_[1],
                 this->rxDataPacket_[3]);
         // logDebugHex_("Received bytes", this->rxDataPacket_, this->rxDataPacket_[2] + sizeof(PanelPacketHeader));  //
-        // DEBUG
+     
         //  Handle received packet
         processDataPacket_();
 
@@ -780,13 +780,10 @@ void Kpa1::backlightHandler_() {
       this->queuedKdu_.back_light = false;
       // Save a copy of the chime type
       uint8_t chime_save = this->queuedKdu_.chime;
-      // If the alarm is in the disarm state, temporarly override the chime type
-      this->queuedKdu_.chime = CHIME_NONE;
+      if(this->alarmState_ == esphome::alarm_control_panel::ACP_STATE_DISARMED){
+        this->queuedKdu_.chime = CHIME_NONE;
+      }
       // Send the backlight off message to the display
-      kduEnqueue_(&this->queuedKdu_);
-      
-      // Restore the chime type
-      this->queuedKdu_.chime = chime_save;
       kduEnqueue_(&this->queuedKdu_);
     }
   }
@@ -823,20 +820,14 @@ void Kpa1::remoteErrorCountersHandler_() {
 
 /*
  * Ready led handler. Throttles the update of the ready LED.
- * Handles chime when sensor opened.
  */
 
 void Kpa1::readyLedHandler_() {
-  uint8_t chime_new = CHIME_NONE, chime_save;
-  
-  // Don't update anything if ARMING, PENDING, or TRIGGERED
-  if(this->alarmState_ == esphome::alarm_control_panel::ACP_STATE_ARMING ||
-    this->alarmState_ == esphome::alarm_control_panel::ACP_STATE_PENDING ||
-    this->alarmState_ == esphome::alarm_control_panel::ACP_STATE_TRIGGERED) {
+
+  if(this->alarmState_ != esphome::alarm_control_panel::ACP_STATE_DISARMED) {
     return;
   }
      
-  
   if (TEST_TIMER(this->readyLedTimer_, READY_LED_UPDATE_TIME_MS)) {
     if (this->fastReadyLed_ != this->queuedKdu_.ready) {
       this->readyLedTimer_ = millis();
@@ -847,17 +838,12 @@ void Kpa1::readyLedHandler_() {
         if (this->fastReadyLed_) {
           lcdCopyString_(1, 0, READY_TO_ARM_TEXT);
         } else {
-          chime_new = (this->fastChime_) ? CHIME_THREE_TIMES : CHIME_NONE;  // Sensor opened
           lcdCopyString_(1, 0, NOT_READY_TEXT);
         }
+        this->queuedKdu_.ready = this->fastReadyLed_;
+        this->queuedKdu_.chime = CHIME_NONE;
+        kduEnqueue_(&this->queuedKdu_);
       }
-      chime_save = this->queuedKdu_.chime;
-      this->queuedKdu_.chime = chime_new;
-      this->queuedKdu_.ready = this->fastReadyLed_;
-      kduEnqueue_(&this->queuedKdu_);
-      this->queuedKdu_.chime = chime_save;
-      kduEnqueue_(&this->queuedKdu_);
-      
     }
   }
 }
@@ -1039,8 +1025,8 @@ void Kpa1::setup() {
   this->codeAndCommandReceived_ = false;
   this->commProblem_ = false;
   this->fastReadyLed_ = false;
-  this->fastChime_ = false;
  
+
 
   uint32_t now = millis();
   this->powerOnTimer_ = now;
@@ -1052,6 +1038,7 @@ void Kpa1::setup() {
   this->remoteErrorCounterTimer_ = now;
   this->validCommandTimer_ = now;
   this->helloBackoffTimer_ = now;
+  this->chimeTimer_ = now;
 
   // Initialize KDU
   this->queuedKdu_.armed = false;
@@ -1144,15 +1131,22 @@ void Kpa1::set_keypad_alarm_silent(bool silent) { this->keypadAlarmSilent_ = sil
  */
 
 void Kpa1::update_system_ready(bool ready) {
+  
   this->fastReadyLed_ = ready;  // Save a copy for testing later
+
 }
 
 /*
- * Update the entry chime state
+ * Send entry chime
+ * Throttle the rate that these can be sent so that the kdu pool doesn't overflow.
  */
 
-void Kpa1::update_system_entry_chime(bool chime) {
-  this->fastChime_ = chime;  // Save copy for testing later
+void Kpa1::send_entry_chime() {
+  if((this->alarmState_ == esphome::alarm_control_panel::ACP_STATE_DISARMED) && (TEST_TIMER(this->chimeTimer_, CHIME_UPDATE_TIME_MS))) {
+    this->chimeTimer_ = millis();
+    this->queuedKdu_.chime = CHIME_THREE_TIMES;
+    kduEnqueue_(&this->queuedKdu_);
+  }
 }
 
 /*

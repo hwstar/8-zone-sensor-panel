@@ -19,6 +19,11 @@ TemplateAlarmControlPanel::TemplateAlarmControlPanel(){};
 void TemplateAlarmControlPanel::add_sensor(binary_sensor::BinarySensor *sensor, uint16_t flags, uint16_t type) {
   this->sensor_map_[sensor].flags = flags;
   this->sensor_map_[sensor].type = type;
+  // Allocate a data store for the new sensor.
+  SensorDataStore *sd = new SensorDataStore;
+  // Initialize it
+  memset(sd, 0, sizeof(SensorDataStore));
+  this->sensor_map_[sensor].data_store = sd;
 };
 #endif
 
@@ -113,9 +118,24 @@ void TemplateAlarmControlPanel::loop() {
   bool delayed_sensor_not_ready = false;
   bool instant_sensor_not_ready = false;
   
-  // Test all of the sensors in the list regardless of the alarm panel state
+
 #ifdef USE_BINARY_SENSOR
+  // Test all of the sensors in the list regardless of the alarm panel state
   for (auto sensor_info : this->sensor_map_) {
+     // Check for chime zones
+    if((sensor_info.second.flags & BINARY_SENSOR_MODE_CHIME)) {
+      // Look for the transition from closed to open
+      if((sensor_info.second.data_store->last_chime_state == false) && (sensor_info.first->state == true)) {
+        // Must be disarmed to chime
+        if(this->current_state_ == ACP_STATE_DISARMED) {
+          //ESP_LOGI(TAG, "Object ID hash: %08X", sensor_info.first->get_object_id_hash());
+          //ESP_LOGI(TAG, "Chime");
+          this->chime_callback_.call();
+        }
+      }
+      sensor_info.second.data_store->last_chime_state = sensor_info.first->state;
+    }
+    // Check for triggered sensors
     if (sensor_info.first->state) { // Sensor triggered?
       // Skip if bypass armed home
       if (this->current_state_ == ACP_STATE_ARMED_HOME &&
@@ -127,9 +147,9 @@ void TemplateAlarmControlPanel::loop() {
           (sensor_info.second.flags & BINARY_SENSOR_MODE_BYPASS_ARMED_NIGHT)) {
         continue;
       }
+      
       // If sensor type is of type instant
       if(sensor_info.second.type == ALARM_SENSOR_TYPE_INSTANT) {
-        
         instant_sensor_not_ready = true;
         break;
       }
@@ -150,8 +170,9 @@ void TemplateAlarmControlPanel::loop() {
       }
     }
   }
-   // Update all sensors not ready flag
+  // Update all sensors not ready flag
   this->sensors_ready_ = ((instant_sensor_not_ready == false) && (delayed_sensor_not_ready == false));
+ 
   
 #endif
   if (this->is_state_armed(future_state) && (delayed_sensor_not_ready || instant_sensor_not_ready)) {
