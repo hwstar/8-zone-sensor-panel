@@ -7,15 +7,11 @@
 #define TEST_TIMER(timer, duration) ((((uint32_t) millis()) - timer) > duration)
 #define NEXT_QUEUE_INDEX(prev, depth) ((prev + 1 >= depth) ? 0 : prev + 1)
 
-
-
-
 namespace esphome {
 namespace kpa1 {
- 
 
 const char CODE_START_OVER_KEY = '*';
-const uint8_t CODE_DIGITS_MAX  = 4;
+const uint8_t CODE_DIGITS_MAX = 4;
 const uint8_t MAX_KEYPAD_LINE = 16;
 const uint8_t MAX_KEYPAD_DATA_LENGTH = 16;
 const uint8_t MAX_ASSISTANCE_KEY = 4;
@@ -318,7 +314,7 @@ class Kpa1 : public uart::UARTDevice, public Component {
   void update_system_ready(bool ready);
 
   //
-  // Send entry chime 
+  // Send entry chime
   // The yaml code should call this whenever a chime zone goes from closed to open
   //
 
@@ -361,34 +357,21 @@ class Kpa1 : public uart::UARTDevice, public Component {
   // and model is the keypad model number.
 
   const char *get_keypad_info();
-  
-  
+
   //
   // Return the assistance key value. Returns true if one was pressed.
   // Return false if no assistance key was pressed.
   // After a true is returned, the assistance key value returned will
   // be zero on subsequent calls until a new key is pressed.
   //
-  
-  bool get_assistance_key_a(); // Topmost
-  
+
+  bool get_assistance_key_a();  // Topmost
+
   bool get_assistance_key_b();
-  
+
   bool get_assistance_key_c();
-  
-  bool get_assistance_key_d(); // Bottom
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+
+  bool get_assistance_key_d();  // Bottom
 };
 
 }  // namespace kpa1

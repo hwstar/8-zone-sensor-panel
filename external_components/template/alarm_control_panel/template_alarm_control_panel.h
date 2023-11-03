@@ -24,7 +24,7 @@ enum BinarySensorFlags : uint16_t {
   BINARY_SENSOR_MODE_CHIME = 1 << 3,
 };
 
-enum AlarmSensorType: uint16_t {
+enum AlarmSensorType : uint16_t {
   ALARM_SENSOR_TYPE_DELAYED = 0,
   ALARM_SENSOR_TYPE_INSTANT,
   ALARM_SENSOR_TYPE_INTERIOR_FOLLOWER
@@ -47,8 +47,6 @@ typedef struct SensorInfo {
   bool last_chime_state;
   SensorDataStore *data_store;
 } SensorInfo;
-
-
 
 class TemplateAlarmControlPanel : public alarm_control_panel::AlarmControlPanel, public Component {
  public:
@@ -121,8 +119,8 @@ class TemplateAlarmControlPanel : public alarm_control_panel::AlarmControlPanel,
   void control(const alarm_control_panel::AlarmControlPanelCall &call) override;
 #ifdef USE_BINARY_SENSOR
   // This maps a binary sensor to its type and attribute bits
-  std::map<binary_sensor::BinarySensor *, SensorInfo > sensor_map_;
-  
+  std::map<binary_sensor::BinarySensor *, SensorInfo> sensor_map_;
+
 #endif
   TemplateAlarmControlPanelRestoreMode restore_mode_{};
 

@@ -1,13 +1,12 @@
 #include "kpa1.h"
 #include "esphome/core/log.h"
 
-
 #define ESP_LL1 ESP_LOGD
 #define ESP_LL2 ESP_LOGD
 
 namespace esphome {
 namespace kpa1 {
-  
+
 static const char *TAG = "kpa1";
 
 // Customizable text messages
@@ -15,7 +14,7 @@ static const char *TAG = "kpa1";
 const char *NOT_READY_TEXT = "Not Ready";
 const char *READY_TO_ARM_TEXT = "Ready to Arm";
 const char *DISARMED_TEXT = "Disarmed";
-const char *ARMED_HOME_TEXT ="Armed Stay";
+const char *ARMED_HOME_TEXT = "Armed Stay";
 const char *ARMED_AWAY_TEXT = "Armed Away";
 const char *ARMED_NIGHT_TEXT = "Armed Night";
 const char *ARMED_VACATION_TEXT = "Armed Vacation";
@@ -26,7 +25,6 @@ const char *ALARM_ARMING_TEXT = "Exit Delay";
 const char *LEAVE_NOW_TEXT = "Leave Now";
 const char *DISARMING_TEXT = "Disarming...";
 const char *TRIGGERED_TEXT = "*** ALARM ***";
-
 
 Kpa1::Kpa1() {
   // These are in the constructor, because the setters for them are called
@@ -195,7 +193,7 @@ void Kpa1::makeTxDataPacket_(uint8_t *packet, uint8_t record_type, void *data) {
     case RTYPE_CONN_KEYPADS:
       clipped_data_len = 0;
       break;
-      
+
     case RTYPE_VERSION:
       clipped_data_len = 0;
       break;
@@ -571,12 +569,12 @@ void Kpa1::processDataPacket_() {
       }
       break;
     }
-    
+
     case RTYPE_VERSION: {
       VersionInfo *prec = (VersionInfo *) (this->rxDataPacket_ + sizeof(PanelPacketHeader) + sizeof(RecordTypeHeader));
       memcpy(&this->vi_, prec, sizeof(VersionInfo));
-      ESP_LOGI(TAG, "KPA1 device id: %02d, major version: %02d, mid version: %02d, minor version: %02d",
-      vi_.device_id, vi_.version_major, vi_.version_mid, vi_.version_minor);
+      ESP_LOGI(TAG, "KPA1 device id: %02d, major version: %02d, mid version: %02d, minor version: %02d", vi_.device_id,
+               vi_.version_major, vi_.version_mid, vi_.version_minor);
       break;
     }
 
@@ -611,7 +609,7 @@ void Kpa1::commStateMachineHandler_() {
         ESP_LL1(TAG, "Received data packet. Sequence number: %d, record type: %d", this->rxDataPacket_[1],
                 this->rxDataPacket_[3]);
         // logDebugHex_("Received bytes", this->rxDataPacket_, this->rxDataPacket_[2] + sizeof(PanelPacketHeader));  //
-     
+
         //  Handle received packet
         processDataPacket_();
 
@@ -780,7 +778,7 @@ void Kpa1::backlightHandler_() {
       this->queuedKdu_.back_light = false;
       // Save a copy of the chime type
       uint8_t chime_save = this->queuedKdu_.chime;
-      if(this->alarmState_ == esphome::alarm_control_panel::ACP_STATE_DISARMED){
+      if (this->alarmState_ == esphome::alarm_control_panel::ACP_STATE_DISARMED) {
         this->queuedKdu_.chime = CHIME_NONE;
       }
       // Send the backlight off message to the display
@@ -823,11 +821,10 @@ void Kpa1::remoteErrorCountersHandler_() {
  */
 
 void Kpa1::readyLedHandler_() {
-
-  if(this->alarmState_ != esphome::alarm_control_panel::ACP_STATE_DISARMED) {
+  if (this->alarmState_ != esphome::alarm_control_panel::ACP_STATE_DISARMED) {
     return;
   }
-     
+
   if (TEST_TIMER(this->readyLedTimer_, READY_LED_UPDATE_TIME_MS)) {
     if (this->fastReadyLed_ != this->queuedKdu_.ready) {
       this->readyLedTimer_ = millis();
@@ -901,7 +898,7 @@ void Kpa1::receiveCodeDigitsHandler_() {
               return;
             }
             // Handle assistance key
-            if ((keypadDigitsReceived_[i] == 'A' ) ||( keypadDigitsReceived_[i] == 'B') || 
+            if ((keypadDigitsReceived_[i] == 'A') || (keypadDigitsReceived_[i] == 'B') ||
                 (keypadDigitsReceived_[i] == 'C') || (keypadDigitsReceived_[i] == 'D')) {
               uint8_t index = keypadDigitsReceived_[i] - 'A';
               this->assistanceKey_[index] = true;
@@ -911,7 +908,7 @@ void Kpa1::receiveCodeDigitsHandler_() {
               ESP_LL1(TAG, "User pressed an assistance key, resetting code receiver");
               return;
             }
-            
+
             // Add key to code digit buffer
             this->codeInProcess_[this->codeDigitCount_ + i] = keypadDigitsReceived_[i];
           }
@@ -989,10 +986,10 @@ void Kpa1::receiveCodeDigitsHandler_() {
  */
 
 bool Kpa1::getAssistanceKey_(uint8_t key) {
-  if(key >= MAX_ASSISTANCE_KEY) {
+  if (key >= MAX_ASSISTANCE_KEY) {
     return false;
   }
-  if( this->assistanceKey_[key] == false) {
+  if (this->assistanceKey_[key] == false) {
     return false;
   }
   bool ak = this->assistanceKey_[key];
@@ -1025,8 +1022,6 @@ void Kpa1::setup() {
   this->codeAndCommandReceived_ = false;
   this->commProblem_ = false;
   this->fastReadyLed_ = false;
- 
-
 
   uint32_t now = millis();
   this->powerOnTimer_ = now;
@@ -1131,9 +1126,7 @@ void Kpa1::set_keypad_alarm_silent(bool silent) { this->keypadAlarmSilent_ = sil
  */
 
 void Kpa1::update_system_ready(bool ready) {
-  
   this->fastReadyLed_ = ready;  // Save a copy for testing later
-
 }
 
 /*
@@ -1142,7 +1135,8 @@ void Kpa1::update_system_ready(bool ready) {
  */
 
 void Kpa1::send_entry_chime() {
-  if((this->alarmState_ == esphome::alarm_control_panel::ACP_STATE_DISARMED) && (TEST_TIMER(this->chimeTimer_, CHIME_UPDATE_TIME_MS))) {
+  if ((this->alarmState_ == esphome::alarm_control_panel::ACP_STATE_DISARMED) &&
+      (TEST_TIMER(this->chimeTimer_, CHIME_UPDATE_TIME_MS))) {
     this->chimeTimer_ = millis();
     this->queuedKdu_.chime = CHIME_THREE_TIMES;
     kduEnqueue_(&this->queuedKdu_);
@@ -1163,38 +1157,28 @@ bool Kpa1::check_for_zone_faults(uint64_t zone_state_bits, uint64_t zone_bits_ma
 
 bool Kpa1::get_keypad_comm_problem() { return this->commProblem_; }
 
-
 /*
  * Return the value of the assistance key A
  */
 
-
-bool Kpa1::get_assistance_key_a() {
-  return getAssistanceKey_(0);
-}
+bool Kpa1::get_assistance_key_a() { return getAssistanceKey_(0); }
 
 /*
  * Return the value of the assistance key B
  */
 
-bool Kpa1::get_assistance_key_b() {
-  return getAssistanceKey_(1);
-}
+bool Kpa1::get_assistance_key_b() { return getAssistanceKey_(1); }
 
 /*
  * Return the value of the assistance key C
  */
 
-bool Kpa1::get_assistance_key_c() {
-  return getAssistanceKey_(2);
-}
+bool Kpa1::get_assistance_key_c() { return getAssistanceKey_(2); }
 
 /*
  * Return the value of the assistance key D
  */
-bool Kpa1::get_assistance_key_d() {
-  return getAssistanceKey_(3);
-}
+bool Kpa1::get_assistance_key_d() { return getAssistanceKey_(3); }
 
 /*
  * Return list of kpa1 addresses
@@ -1321,7 +1305,6 @@ void Kpa1::update_alarm_state(uint8_t status) {
         this->queuedKdu_.chime = CHIME_ONCE;  // Acknowledge arming command
         kduEnqueue_(&this->queuedKdu_);
         this->queuedKdu_.chime = CHIME_NONE;
-        
       }
       if (this->keypadExitSilent_) {
         this->queuedKdu_.chime = CHIME_NONE;

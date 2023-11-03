@@ -88,14 +88,14 @@ class AlarmControlPanel : public EntityBase {
    * @param callback The callback function
    */
   void add_on_cleared_callback(std::function<void()> &&callback);
-  
-   /** Add a callback for when a chime zone goes from closed to open
+
+  /** Add a callback for when a chime zone goes from closed to open
    *
    * @param callback The callback function
    */
   void add_on_chime_callback(std::function<void()> &&callback);
-  
-   /** Add a callback for when a ready state changes
+
+  /** Add a callback for when a ready state changes
    *
    * @param callback The callback function
    */

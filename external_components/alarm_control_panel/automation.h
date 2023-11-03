@@ -62,7 +62,6 @@ class DisarmedTrigger : public Trigger<> {
   }
 };
 
-
 class ClearedTrigger : public Trigger<> {
  public:
   explicit ClearedTrigger(AlarmControlPanel *alarm_control_panel) {
