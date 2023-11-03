@@ -94,6 +94,12 @@ class AlarmControlPanel : public EntityBase {
    * @param callback The callback function
    */
   void add_on_chime_callback(std::function<void()> &&callback);
+  
+   /** Add a callback for when a ready state changes
+   *
+   * @param callback The callback function
+   */
+  void add_on_ready_callback(std::function<void()> &&callback);
 
   /** A numeric representation of the supported features as per HomeAssistant
    *
@@ -186,6 +192,8 @@ class AlarmControlPanel : public EntityBase {
   CallbackManager<void()> cleared_callback_{};
   // chime callback
   CallbackManager<void()> chime_callback_{};
+  // ready callback
+  CallbackManager<void()> ready_callback_{};
 };
 
 }  // namespace alarm_control_panel

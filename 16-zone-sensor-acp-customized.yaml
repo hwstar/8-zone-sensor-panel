@@ -48,15 +48,6 @@ external_components:
       path: external_components
     components: ["kpa1", "alarm_control_panel", "template"] 
   
- 
-globals:
-  
-  - id: all_sensors_ready_old
-    type: bool
-    restore_value: no
-    initial_value: "true"
-    
-    
 
 alarm_control_panel:
   - platform: template
@@ -76,6 +67,7 @@ alarm_control_panel:
         sensor_type: delayed
         chime: true
       - input: zone2  # 
+        chime: true
         sensor_type: instant
       - input: zone3  # 
         sensor_type: interior_follower
@@ -115,10 +107,15 @@ alarm_control_panel:
         - lambda: !lambda |-
             ESP_LOGI("AlarmPanel", "Chime Yaml");
             id(cbus).send_entry_chime();
-  
- 
-      
-
+            
+    on_ready:
+      then: # Ready state change
+        - lambda: !lambda |-
+            ESP_LOGI("AlarmPanel", "Ready State Change");
+            bool ready = id(acp1).get_all_sensors_ready();
+            // Update keypads
+            id(cbus).update_system_ready(ready);
+            
 
 #
 # webserver
@@ -187,29 +184,8 @@ pca9554:
   - id: pca9554_zones_9_16
     address: 0x39
   
-  
+
 interval:
-  - interval: 100ms
-    #
-    # This code checks for zone faults. You don't want to arm the alarm with faults present
-    # The alarm component doesn't support fault bypassing yet, so we need some form of indication
-    # when faults are present to prompt the user not to arm the system.
-    #
-    
-    then:
-      lambda: |-
-        bool all_sensors_ready = id(acp1).get_all_sensors_ready();
-        if(all_sensors_ready != id(all_sensors_ready_old)){
-          ESP_LOGI("yaml", "All Sensors Ready new: %d, old %d: ", all_sensors_ready, id(all_sensors_ready_old));
-          id(all_sensors_ready_old) = all_sensors_ready;
-          id(cbus).update_system_ready(all_sensors_ready);
-        }
-  
-     
-   
- 
-        
-          
   - interval: 3sec
     then:
       - switch.turn_on: heartbeat_led
@@ -453,7 +429,7 @@ binary_sensor:
   - platform: template
     name: "All Sensors Ready"
     lambda: |-
-      return id(all_sensors_ready_old);
+      return id(acp1).get_all_sensors_ready();
   
   - platform: template
     name: "Keypad Comm. Problem"

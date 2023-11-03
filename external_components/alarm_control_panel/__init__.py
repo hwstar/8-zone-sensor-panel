@@ -23,6 +23,7 @@ CONF_ON_ARMED_NIGHT = "on_armed_night"
 CONF_ON_ARMED_AWAY = "on_armed_away"
 CONF_ON_DISARMED = "on_disarmed"
 CONF_ON_CHIME = "on_chime"
+CONF_ON_READY = "on_ready"
 
 alarm_control_panel_ns = cg.esphome_ns.namespace("alarm_control_panel")
 AlarmControlPanel = alarm_control_panel_ns.class_("AlarmControlPanel", cg.EntityBase)
@@ -57,6 +58,9 @@ DisarmedTrigger = alarm_control_panel_ns.class_(
 ChimeTrigger = alarm_control_panel_ns.class_(
     "ChimeTrigger", automation.Trigger.template()
 )
+ReadyTrigger = alarm_control_panel_ns.class_(
+    "ReadyTrigger", automation.Trigger.template()
+)
 
 ArmAwayAction = alarm_control_panel_ns.class_("ArmAwayAction", automation.Action)
 ArmHomeAction = alarm_control_panel_ns.class_("ArmHomeAction", automation.Action)
@@ -65,6 +69,7 @@ DisarmAction = alarm_control_panel_ns.class_("DisarmAction", automation.Action)
 PendingAction = alarm_control_panel_ns.class_("PendingAction", automation.Action)
 TriggeredAction = alarm_control_panel_ns.class_("TriggeredAction", automation.Action)
 ChimeAction = alarm_control_panel_ns.class_("ChimeAction", automation.Action)
+ReadyAction = alarm_control_panel_ns.class_("ReadyAction", automation.Action)
 
 AlarmControlPanelCondition = alarm_control_panel_ns.class_(
     "AlarmControlPanelCondition", automation.Condition
@@ -123,6 +128,11 @@ ALARM_CONTROL_PANEL_SCHEMA = cv.ENTITY_BASE_SCHEMA.extend(
                 cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(ChimeTrigger),
             }
         ),
+        cv.Optional(CONF_ON_READY): automation.validate_automation(
+            {
+                cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(ReadyTrigger),
+            }
+        ),
     }
 )
 
@@ -172,6 +182,10 @@ async def setup_alarm_control_panel_core_(var, config):
     for conf in config.get(CONF_ON_CHIME, []):
         trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
         await automation.build_automation(trigger, [], conf)
+    for conf in config.get(CONF_ON_READY, []):
+        trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)
+        await automation.build_automation(trigger, [], conf)
+
 
 
 
@@ -251,6 +265,14 @@ async def alarm_action_trigger_to_code(config, action_id, template_arg, args):
     "alarm_control_panel.chime", ChimeAction, ALARM_CONTROL_PANEL_ACTION_SCHEMA
 )
 async def alarm_action_chime_to_code(config, action_id, template_arg, args):
+    paren = await cg.get_variable(config[CONF_ID])
+    var = cg.new_Pvariable(action_id, template_arg, paren)
+    return var
+
+@automation.register_action(
+    "alarm_control_panel.ready", ReadyAction, ALARM_CONTROL_PANEL_ACTION_SCHEMA
+)
+async def alarm_action_ready_to_code(config, action_id, template_arg, args):
     paren = await cg.get_variable(config[CONF_ID])
     var = cg.new_Pvariable(action_id, template_arg, paren)
     return var

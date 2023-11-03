@@ -77,6 +77,13 @@ class ChimeTrigger : public Trigger<> {
   }
 };
 
+class ReadyTrigger : public Trigger<> {
+ public:
+  explicit ReadyTrigger(AlarmControlPanel *alarm_control_panel) {
+    alarm_control_panel->add_on_ready_callback([this]() { this->trigger(); });
+  }
+};
+
 template<typename... Ts> class ArmAwayAction : public Action<Ts...> {
  public:
   explicit ArmAwayAction(AlarmControlPanel *alarm_control_panel) : alarm_control_panel_(alarm_control_panel) {}
