@@ -111,7 +111,7 @@ alarm_control_panel:
     on_ready:
       then: # Ready state change
         - lambda: !lambda |-
-            ESP_LOGI("AlarmPanel", "Ready State Change");
+            ESP_LOGI("AlarmPanel", "Sensor ready change to: %s", ((id(acp1).get_all_sensors_ready()) ? (const char *) "True" : (const char *) "False"));
             bool ready = id(acp1).get_all_sensors_ready();
             // Update keypads
             id(cbus).update_system_ready(ready);
@@ -443,13 +443,16 @@ switch:
     name: Siren
     id: siren
     pin:
+      ignore_strapping_warning: true
       number: GPIO02
     inverted: false
+    
     
   # Heartbeat LED
   - platform: gpio
     id: heartbeat_led
     pin:
+      ignore_strapping_warning: true
       number: GPIO15
       mode:
         output: true
@@ -466,7 +469,9 @@ switch:
 
 output:
   - platform: gpio
-    pin: GPIO12
+    pin:
+      ignore_strapping_warning: true
+      number: GPIO12
     id: rx_ena
 
 
@@ -483,7 +488,9 @@ uart:
   # Uart for CBUS Honeywell/Residio keypad adapter (kpa1)
   - id: cbus_uart
     tx_pin: GPIO17
-    rx_pin: GPIO5
+    rx_pin:
+      ignore_strapping_warning: true
+      number: GPIO5
     baud_rate: 19200
 
   
