@@ -10,7 +10,7 @@ esphome:
   project:
     name: esphome.project-template
     version: "1.0"
-  min_version: "2023.8.1"
+  min_version: "2023.10.1"
 #
 # Ethernet
 #
@@ -368,13 +368,16 @@ switch:
     name: Siren
     id: siren
     pin:
+      ignore_strapping_warning: true
       number: GPIO02
     inverted: false
+    
     
   # Heartbeat LED
   - platform: gpio
     id: heartbeat_led
     pin:
+      ignore_strapping_warning: true
       number: GPIO15
       mode:
         output: true
@@ -383,6 +386,7 @@ switch:
   - platform: gpio
     id: rx_ena
     pin:
+      ignore_strapping_warning: true
       number: GPIO12
       mode:
         output: true
@@ -401,9 +405,11 @@ uart:
   # Uart for future CBUS expansion
   - id: cbus_uart
     tx_pin: GPIO17
-    rx_pin: GPIO5
-    baud_rate: 4800
-  
+    rx_pin:
+      ignore_strapping_warning: true
+      number: GPIO5
+    baud_rate: 19200
+
   
 
 
