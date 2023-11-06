@@ -87,44 +87,44 @@ enum { SRX_STATE_IDLE = 0, SRX_STATE_WAIT_SECOND };
  * Local structs not used outside of this component
  */
 
-typedef struct alignas(1) ErrorCountersLocal {
+using ErrorCountersLocal = struct alignas(1) ErrorCountersLocal {
   uint32_t tx_soft_errors;
   uint32_t tx_hard_errors;
   uint32_t tx_buffer_pool_overflow_errors;
   uint32_t rx_bad_packets;
   uint32_t rx_frame_timeouts;
   uint32_t pad[3];
-} ErrorCountersLocal;
+};
 
 /*
  * Structs used in communication with the kpa1
  */
-typedef struct alignas(1) VersionInfo {
+using VersionInfo = struct alignas(1) VersionInfo {
   uint8_t device_id;
   uint8_t version_major;
   uint8_t version_mid;
   uint8_t version_minor;
-} VersionInfo;
+};
 
-typedef struct alignas(1) PanelPacketAckNak {
+using PanelPacketAckNak = struct alignas(1) PanelPacketAckNak {
   uint8_t type;
   uint8_t seq_num;
   uint8_t crc16_l;
   uint8_t crc16_h;
-} PanelPacketAckNak;
+};
 
-typedef struct alignas(1) PanelPacketHeader {
+using PanelPacketHeader = struct alignas(1) PanelPacketHeader {
   uint8_t type;
   uint8_t seq_num;
   uint8_t payload_len;
-} PanelPacketHeader;
+};
 
-typedef struct alignas(1) RecordTypeHeader {
+using RecordTypeHeader = struct alignas(1) RecordTypeHeader {
   uint8_t record_type;
   uint8_t data_length;
-} RecordTypeHeader;
+};
 
-typedef struct alignas(1) KeypadDisplayUpdate {
+using KeypadDisplayUpdate = struct alignas(1) KeypadDisplayUpdate {
   bool ready;
   bool armed;
   bool back_light;
@@ -135,26 +135,26 @@ typedef struct alignas(1) KeypadDisplayUpdate {
   uint8_t line1[MAX_KEYPAD_LINE];
   uint8_t line2[MAX_KEYPAD_LINE];
 
-} KeypadDisplayUpdate;
+};
 
-typedef struct alignas(1) PanelKeyboardEvent {
+using PanelKeyboardEvent =  struct alignas(1) PanelKeyboardEvent {
   uint8_t record_type;
   uint8_t keypad_address;
   uint8_t action;
   uint8_t record_data_length;
   uint8_t record_data[MAX_KEYPAD_DATA_LENGTH];
-} PanelKeyboardEvent;
+};
 
-typedef struct alignas(1) PanelKeypadType {
+using PanelKeypadType = struct alignas(1) PanelKeypadType {
   uint8_t valid;
   uint8_t model[KP_MODEL_LEN];
-} PanelKeypadType;
+};
 
-typedef struct alignas(1) PanelKeypadInfo {
+using PanelKeypadInfo = struct alignas(1) PanelKeypadInfo {
   PanelKeypadType info[KP_INFO_MAX_KEYPADS];
-} PanelKeypadInfo;
+};
 
-typedef struct alignas(1) ErrorCountersRemote {
+using ErrorCountersRemote = struct alignas(1) ErrorCountersRemote {
   uint32_t tx_soft_errors;
   uint32_t tx_hard_errors;
   uint32_t tx_buffer_pool_overflow_errors;
@@ -163,12 +163,12 @@ typedef struct alignas(1) ErrorCountersRemote {
   uint32_t ecp_parity_errors;
   uint32_t ecp_checksum_errors;
   uint32_t pad;
-} ErrorCountersRemote;
+};
 
-typedef struct alignas(1) EchoCommand {
+using EchoCommand = struct alignas(1) EchoCommand {
   uint8_t length;
   uint8_t data[8];
-} EchoCommand;
+};
 
 class Kpa1 : public uart::UARTDevice, public Component {
  protected:
