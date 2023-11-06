@@ -368,7 +368,6 @@ switch:
     name: Siren
     id: siren
     pin:
-      ignore_strapping_warning: true
       number: GPIO02
     inverted: false
     
@@ -377,7 +376,6 @@ switch:
   - platform: gpio
     id: heartbeat_led
     pin:
-      ignore_strapping_warning: true
       number: GPIO15
       mode:
         output: true
@@ -386,7 +384,6 @@ switch:
   - platform: gpio
     id: rx_ena
     pin:
-      ignore_strapping_warning: true
       number: GPIO12
       mode:
         output: true
@@ -406,7 +403,6 @@ uart:
   - id: cbus_uart
     tx_pin: GPIO17
     rx_pin:
-      ignore_strapping_warning: true
       number: GPIO5
     baud_rate: 19200
 
