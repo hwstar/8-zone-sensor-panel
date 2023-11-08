@@ -64,13 +64,13 @@ alarm_control_panel:
     
     binary_sensors:
       - input: zone1  # Label your zones here as comments
-        sensor_type: delayed
+        trigger_mode: delayed
         chime: true
       - input: zone2  # 
         chime: true
-        sensor_type: instant
+        trigger_mode: instant
       - input: zone3  # 
-        sensor_type: interior_follower
+        trigger_mode: interior_follower
       - input: zone4  #
       - input: zone5  #
       - input: zone6  # 
