@@ -70,7 +70,7 @@ alarm_control_panel:
         chime: true
         trigger_mode: instant
       - input: zone3  # 
-        trigger_mode: interior_follower
+        trigger_mode: delayed_follower
       - input: zone4  #
       - input: zone5  #
       - input: zone6  # 

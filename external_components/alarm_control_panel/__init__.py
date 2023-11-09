@@ -11,7 +11,7 @@ from esphome.const import (
 )
 from esphome.cpp_helpers import setup_entity
 
-CODEOWNERS = ["@grahambrown11","hwstar"]
+CODEOWNERS = ["@grahambrown11", "@hwstar"]
 IS_PLATFORM_COMPONENT = True
 
 CONF_ON_TRIGGERED = "on_triggered"
@@ -187,8 +187,6 @@ async def setup_alarm_control_panel_core_(var, config):
         await automation.build_automation(trigger, [], conf)
 
 
-
-
 async def register_alarm_control_panel(var, config):
     if not CORE.has_id(config[CONF_ID]):
         var = cg.Pvariable(config[CONF_ID], var)
@@ -260,7 +258,8 @@ async def alarm_action_trigger_to_code(config, action_id, template_arg, args):
     paren = await cg.get_variable(config[CONF_ID])
     var = cg.new_Pvariable(action_id, template_arg, paren)
     return var
-    
+
+
 @automation.register_action(
     "alarm_control_panel.chime", ChimeAction, ALARM_CONTROL_PANEL_ACTION_SCHEMA
 )
@@ -269,14 +268,19 @@ async def alarm_action_chime_to_code(config, action_id, template_arg, args):
     var = cg.new_Pvariable(action_id, template_arg, paren)
     return var
 
+
 @automation.register_action(
     "alarm_control_panel.ready", ReadyAction, ALARM_CONTROL_PANEL_ACTION_SCHEMA
+)
+@automation.register_condition(
+    "alarm_control_panel.ready",
+    AlarmControlPanelCondition,
+    ALARM_CONTROL_PANEL_CONDITION_SCHEMA,
 )
 async def alarm_action_ready_to_code(config, action_id, template_arg, args):
     paren = await cg.get_variable(config[CONF_ID])
     var = cg.new_Pvariable(action_id, template_arg, paren)
     return var
-
 
 
 @automation.register_condition(

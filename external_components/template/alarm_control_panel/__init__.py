@@ -12,7 +12,7 @@ from esphome.const import (
 )
 from .. import template_ns
 
-CODEOWNERS = ["@grahambrown11","hwstar"]
+CODEOWNERS = ["@grahambrown11","@hwstar"]
 
 CONF_CODES = "codes"
 CONF_BYPASS_ARMED_HOME = "bypass_armed_home"
@@ -39,7 +39,7 @@ BinarySensorFlags = {
     FLAG_CHIME: 1 << 3,
 }
 
-SensorTypes = ["delayed","instant","interior_follower"]
+SensorTypes = ["delayed","instant","delayed_follower"]
 
 
 TemplateAlarmControlPanel = template_ns.class_(
