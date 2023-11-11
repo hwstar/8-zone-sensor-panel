@@ -23,9 +23,12 @@ controller kit. It has the following features:
 * I2C bus repeater on external zone connector.
 * Monitoring of battery, auxilliary, and siren voltages using the ESP32 ADC.
 * PTC fuse protection on the Battery, Auxillary Power and Siren outputs.
+* Optional XE8 zone expander board.
+* Optional KPA1 SP8 to Honeywell keypad adapter board.
 
 The hardware is for sale on [Tindie](https://www.tindie.com/products/home-control-labs/8-zone-sensor-panel-for-esphome/)
-It is primarily designed to work with [ESPHome](https://github.com/esphome/esphome) firmware version 2023.8.1 or later.
+It is primarily designed to work with [ESPHome](https://github.com/esphome/esphome) firmware version 2023.10.1 or later.
+The STM32 firmware for the KPA1 is located in this [Repository](https://github.com/hwstar/Honeywell-Residio-ECP-Adapter).
 
 ## Disclaimer
 
