@@ -16,7 +16,7 @@ static const char *const TAG = "template.alarm_control_panel";
 TemplateAlarmControlPanel::TemplateAlarmControlPanel(){};
 
 #ifdef USE_BINARY_SENSOR
-void TemplateAlarmControlPanel::add_sensor(binary_sensor::BinarySensor *sensor, uint16_t flags, uint16_t type) {
+void TemplateAlarmControlPanel::add_sensor(binary_sensor::BinarySensor *sensor, uint16_t flags, AlarmSensorType type) {
   // Save the flags and type. Assign a store index for the per sensor data type.
   SensorDataStore sd;
   sd.last_chime_state = false;
@@ -52,15 +52,13 @@ void TemplateAlarmControlPanel::dump_config() {
     ESP_LOGCONFIG(TAG, "    Chime mode: %s", TRUEFALSE(sensor_info.second.flags & BINARY_SENSOR_MODE_CHIME));
     const char *sensor_type;
     switch (sensor_info.second.type) {
-      case 0:
-        sensor_type = "delayed";
-        break;
-      case 1:
+      case ALARM_SENSOR_TYPE_INSTANT:
         sensor_type = "instant";
         break;
-      case 2:
+      case ALARM_SENSOR_TYPE_DELAYED_FOLLOWER:
         sensor_type = "delayed_follower";
         break;
+      case ALARM_SENSOR_TYPE_DELAYED:
       default:
         sensor_type = "delayed";
     }
@@ -153,7 +151,7 @@ void TemplateAlarmControlPanel::loop() {
         break;
       }
       // If sensor type is of type interior follower
-      if (sensor_info.second.type == ALARM_SENSOR_TYPE_INTERIOR_FOLLOWER) {
+      if (sensor_info.second.type == ALARM_SENSOR_TYPE_DELAYED_FOLLOWER) {
         // Look to see if we are in the pending state
         if (this->current_state_ == ACP_STATE_PENDING) {
           delayed_sensor_not_ready = true;
@@ -184,9 +182,11 @@ void TemplateAlarmControlPanel::loop() {
       this->publish_state(ACP_STATE_TRIGGERED);
     } else if (delayed_sensor_not_ready) {
       // Delayed sensors
-      this->publish_state(((this->pending_time_ > 0) && (this->current_state_ != ACP_STATE_TRIGGERED))
-                              ? ACP_STATE_PENDING
-                              : ACP_STATE_TRIGGERED);
+      if ((this->pending_time_ > 0) && (this->current_state_ != ACP_STATE_TRIGGERED)) {
+        this->publish_state(ACP_STATE_PENDING);
+      } else {
+        this->publish_state(ACP_STATE_TRIGGERED);
+      }
     }
   } else if (future_state != this->current_state_) {
     this->publish_state(future_state);

@@ -12,7 +12,7 @@ from esphome.const import (
 )
 from .. import template_ns
 
-CODEOWNERS = ["@grahambrown11","@hwstar"]
+CODEOWNERS = ["@grahambrown11", "@hwstar"]
 
 CONF_CODES = "codes"
 CONF_BYPASS_ARMED_HOME = "bypass_armed_home"
@@ -39,8 +39,6 @@ BinarySensorFlags = {
     FLAG_CHIME: 1 << 3,
 }
 
-SensorTypes = ["delayed","instant","delayed_follower"]
-
 
 TemplateAlarmControlPanel = template_ns.class_(
     "TemplateAlarmControlPanel", alarm_control_panel.AlarmControlPanel, cg.Component
@@ -54,6 +52,14 @@ RESTORE_MODES = {
     "RESTORE_DEFAULT_DISARMED": TemplateAlarmControlPanelRestoreMode.ALARM_CONTROL_PANEL_RESTORE_DEFAULT_DISARMED,
 }
 
+AlarmSensorType = template_ns.enum("AlarmSensorType")
+
+ALARM_SENSOR_TYPES = {
+    "DELAYED": AlarmSensorType.ALARM_SENSOR_TYPE_DELAYED,
+    "INSTANT": AlarmSensorType.ALARM_SENSOR_TYPE_INSTANT,
+    "DELAYED_FOLLOWER": AlarmSensorType.ALARM_SENSOR_TYPE_DELAYED_FOLLOWER,
+}
+
 
 def validate_config(config):
     if config.get(CONF_REQUIRES_CODE_TO_ARM, False) and not config.get(CONF_CODES, []):
@@ -62,19 +68,6 @@ def validate_config(config):
         )
     return config
 
-#
-# Validate sensor type
-#
-
-def validate_sensors(config):
-  for sensor in config["binary_sensors"]:
-    if sensor["trigger_mode"] not in SensorTypes:
-      valid_trigger_modes = ', '.join(SensorTypes)
-      raise cv.Invalid(
-        f"Invalid trigger mode: \"{sensor['trigger_mode']}\". Must be one of: {valid_trigger_modes}"
-      )
-  return config
-
 
 TEMPLATE_ALARM_CONTROL_PANEL_BINARY_SENSOR_SCHEMA = cv.maybe_simple_value(
     {
@@ -82,7 +75,9 @@ TEMPLATE_ALARM_CONTROL_PANEL_BINARY_SENSOR_SCHEMA = cv.maybe_simple_value(
         cv.Optional(CONF_BYPASS_ARMED_HOME, default=False): cv.boolean,
         cv.Optional(CONF_BYPASS_ARMED_NIGHT, default=False): cv.boolean,
         cv.Optional(CONF_CHIME, default=False): cv.boolean,
-        cv.Optional(CONF_TRIGGER_MODE, default="delayed"): cv.string,
+        cv.Optional(CONF_TRIGGER_MODE, default="DELAYED"): cv.enum(
+            ALARM_SENSOR_TYPES, upper=True, space="_"
+        ),
     },
     key=CONF_INPUT,
 )
@@ -117,7 +112,6 @@ TEMPLATE_ALARM_CONTROL_PANEL_SCHEMA = (
 CONFIG_SCHEMA = cv.All(
     TEMPLATE_ALARM_CONTROL_PANEL_SCHEMA,
     validate_config,
-    validate_sensors,
 )
 
 
@@ -147,7 +141,7 @@ async def to_code(config):
 
     for sensor in config.get(CONF_BINARY_SENSORS, []):
         bs = await cg.get_variable(sensor[CONF_INPUT])
-        trigger_mode_num = SensorTypes.index(sensor[CONF_TRIGGER_MODE]) if sensor[CONF_TRIGGER_MODE] in SensorTypes else 0
+
         flags = BinarySensorFlags[FLAG_NORMAL]
         if sensor[CONF_BYPASS_ARMED_HOME]:
             flags |= BinarySensorFlags[FLAG_BYPASS_ARMED_HOME]
@@ -157,7 +151,7 @@ async def to_code(config):
             supports_arm_night = True
         if sensor[CONF_CHIME]:
             flags |= BinarySensorFlags[FLAG_CHIME]
-        cg.add(var.add_sensor(bs, flags, trigger_mode_num))
+        cg.add(var.add_sensor(bs, flags, sensor[CONF_TRIGGER_MODE]))
 
     cg.add(var.set_supports_arm_home(supports_arm_home))
     cg.add(var.set_supports_arm_night(supports_arm_night))

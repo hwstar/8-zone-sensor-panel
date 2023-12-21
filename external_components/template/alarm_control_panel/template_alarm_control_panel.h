@@ -27,7 +27,7 @@ enum BinarySensorFlags : uint16_t {
 enum AlarmSensorType : uint16_t {
   ALARM_SENSOR_TYPE_DELAYED = 0,
   ALARM_SENSOR_TYPE_INSTANT,
-  ALARM_SENSOR_TYPE_INTERIOR_FOLLOWER
+  ALARM_SENSOR_TYPE_DELAYED_FOLLOWER
 };
 
 #endif
@@ -37,11 +37,13 @@ enum TemplateAlarmControlPanelRestoreMode {
   ALARM_CONTROL_PANEL_RESTORE_DEFAULT_DISARMED,
 };
 
-using SensorDataStore = struct SensorDataStore { bool last_chime_state; };
+struct SensorDataStore {
+  bool last_chime_state;
+};
 
-using SensorInfo = struct SensorInfo {
+struct SensorInfo {
   uint16_t flags;
-  uint16_t type;
+  AlarmSensorType type;
   uint8_t store_index;
 };
 
@@ -63,7 +65,8 @@ class TemplateAlarmControlPanel : public alarm_control_panel::AlarmControlPanel,
    * @param sensor The BinarySensor instance.
    * @param ignore_when_home if this should be ignored when armed_home mode
    */
-  void add_sensor(binary_sensor::BinarySensor *sensor, uint16_t flags = 0, uint16_t type = ALARM_SENSOR_TYPE_DELAYED);
+  void add_sensor(binary_sensor::BinarySensor *sensor, uint16_t flags = 0,
+                  AlarmSensorType type = ALARM_SENSOR_TYPE_DELAYED);
 #endif
 
   /** add a code
