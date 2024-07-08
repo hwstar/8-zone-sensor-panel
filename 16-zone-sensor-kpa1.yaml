@@ -10,7 +10,7 @@ esphome:
   project:
     name: esphome.project-template
     version: "1.0"
-  min_version: "2023.8.1"
+  min_version: "2023.6.6"
   on_boot: # Important - need to enable the UART rx pin
     then:
       # Handle cbus uart_rx strapping pin
@@ -156,7 +156,8 @@ api:
 #
 
 ota:
-  password: !secret esphome_ota_password
+  - platform: esphome
+    password: !secret esphome_ota_password
 
 #
 # Dashboard import

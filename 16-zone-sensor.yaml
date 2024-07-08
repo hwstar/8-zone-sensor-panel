@@ -10,7 +10,7 @@ esphome:
   project:
     name: esphome.project-template
     version: "1.0"
-  min_version: "2023.10.1"
+  min_version: "2024.6.6"
 #
 # Ethernet
 #
@@ -117,7 +117,8 @@ api:
 #
 
 ota:
-  password: !secret esphome_ota_password
+  - platform: esphome
+    password: !secret esphome_ota_password
 
 #
 # Dashboard import
