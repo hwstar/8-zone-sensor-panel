@@ -4,13 +4,14 @@
 
 esphome:
   name: 8-zone-sensor-board
-  platform: ESP32
-  board: esp-wrover-kit
   name_add_mac_suffix: true # Adds a 6 digit MAC suffix to the name defined above. Can be used to distinguish between multiple sensor panels.
   project:
     name: esphome.project-template
     version: "1.0"
-  min_version: "2024.6.6"
+  min_version: "2026.6.1"
+
+esp32:
+  board: esp-wrover-kit
 #
 # Ethernet
 #
@@ -19,7 +20,9 @@ ethernet:
   type: LAN8720
   mdc_pin: GPIO23
   mdio_pin: GPIO18
-  clk_mode: GPIO0_IN
+  clk:
+    pin: GPIO0
+    mode: CLK_EXT_IN
   phy_addr: 1
   power_pin: GPIO16
  
@@ -59,8 +62,8 @@ alarm_control_panel:
     on_state:
       then: # Add things to do on state changes here.
         - lambda: !lambda |-
-            ESP_LOGI("AlarmPanel", "State change %s", alarm_control_panel_state_to_string(id(acp1)->get_state()));
-        
+            ESP_LOGI("AlarmPanel", "State change");
+  
     on_triggered:
       then: # Add things to do when triggered here. e.g. sound siren, send a message etc.
         - lambda: !lambda |-
@@ -399,11 +402,10 @@ switch:
       inverted: false
 
 uart:
-  # Uart for future CBUS expansion
+  # Uart for future CBUS expansion (Keypad adapter)
   - id: cbus_uart
     tx_pin: GPIO17
-    rx_pin:
-      number: GPIO5
+    rx_pin: GPIO5
     baud_rate: 19200
 
   
