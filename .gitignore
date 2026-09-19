@@ -2,7 +2,6 @@ __pycache__/
 *.zip
 secrets.yaml
 .esphome/
-16-zone-sensor-kpa1-ec.yaml
 external_components/template/__init__.py
 external_components/template/binary_sensor/
 external_components/template/button/
